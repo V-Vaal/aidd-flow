@@ -2,7 +2,7 @@
 
 # Validate INTAKE.md structure
 # Ensures INTAKE.md exists and contains all required sections
-# Works from: <project>/.cursor/scripts/ or template/scripts/
+# Works from: <project>/.cursor/scripts/ or scripts/ at repository root
 # Resolves work directory relative to script location only (no pwd guessing)
 
 set -euo pipefail
@@ -13,8 +13,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Resolve work directory relative to script location
 # Case A: target project: <project>/.cursor/scripts/validate-intake.sh
 #         → work dir is <project>/.cursor/work (parent of scripts/, sibling of rules/)
-# Case B: template repo: template/scripts/validate-intake.sh
-#         → work dir is template/.cursor/work (sibling of scripts/)
+# Case B: repository root: scripts/validate-intake.sh
+#         → work dir is .cursor/work (sibling of scripts/)
 if [ "$(basename "$(dirname "$SCRIPT_DIR")")" = ".cursor" ]; then
     # Case A: Running from target project
     CURSOR_DIR="$(dirname "$SCRIPT_DIR")"

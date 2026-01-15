@@ -2,7 +2,7 @@
 
 # Validate Cursor rules structure and frontmatter
 # Ensures all .mdc files have proper frontmatter and no duplicate filenames
-# Works from: <project>/.cursor/scripts/ or template/scripts/
+# Works from: <project>/.cursor/scripts/ or scripts/ at repository root
 # Resolves rules directory relative to script location only (no pwd guessing)
 
 set -euo pipefail
@@ -13,8 +13,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Resolve rules directory relative to script location
 # Case A: target project: <project>/.cursor/scripts/validate-rules.sh
 #         → rules dir is <project>/.cursor/rules (parent of scripts/)
-# Case B: template repo: template/scripts/validate-rules.sh
-#         → rules dir is template/.cursor/rules (sibling of scripts/)
+# Case B: repository root: scripts/validate-rules.sh
+#         → rules dir is .cursor/rules (sibling of scripts/)
 if [ "$(basename "$(dirname "$SCRIPT_DIR")")" = ".cursor" ]; then
     # Case A: Running from target project
     CURSOR_DIR="$(dirname "$SCRIPT_DIR")"
@@ -45,8 +45,8 @@ if [ ! -d "$RULES_DIR" ]; then
         echo -e "${RED}  This script should be in <project>/.cursor/scripts/${NC}"
         echo -e "${RED}  Action: Ensure .cursor/rules/ exists in your project${NC}"
     else
-        echo -e "${RED}  This script should be in template/scripts/${NC}"
-        echo -e "${RED}  Action: Ensure template/.cursor/rules/ exists${NC}"
+        echo -e "${RED}  This script should be in scripts/ at repository root${NC}"
+        echo -e "${RED}  Action: Ensure .cursor/rules/ exists in repository root${NC}"
     fi
     exit 1
 fi

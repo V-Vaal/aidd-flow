@@ -2,7 +2,7 @@
 
 # AIDD Context: Generate compact context bundle for LLMs
 # Prints: repo tree (depth 3), git status, last 10 commits, key config files
-# Designed to run from <project>/.cursor/scripts/ or template/scripts/
+# Designed to run from <project>/.cursor/scripts/ or scripts/ at repository root
 #
 # Usage:
 #   aidd-context.sh [--verbose]
@@ -27,16 +27,16 @@ for arg in "$@"; do
     esac
 done
 
-# Detect if we're in a target project (.cursor/scripts/) or template (template/scripts/)
+# Detect if we're in a target project (.cursor/scripts/) or repository root (scripts/)
 if [ "$(basename "$(dirname "$SCRIPT_DIR")")" = ".cursor" ]; then
     # Running from target project: <project>/.cursor/scripts/
     CURSOR_DIR="$(dirname "$SCRIPT_DIR")"
     PROJECT_ROOT="$(cd "$CURSOR_DIR/.." && pwd)"
 else
-    # Running from template: template/scripts/
-    TEMPLATE_DIR="$(dirname "$SCRIPT_DIR")"
-    PROJECT_ROOT="$(cd "$TEMPLATE_DIR/.." && pwd)"
-    CURSOR_DIR="$TEMPLATE_DIR/.cursor"
+    # Running from repository root: scripts/
+    REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+    PROJECT_ROOT="$REPO_ROOT"
+    CURSOR_DIR="$REPO_ROOT/.cursor"
 fi
 
 # Verify PROJECT_ROOT exists before changing directory

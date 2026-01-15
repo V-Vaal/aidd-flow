@@ -2,7 +2,7 @@
 
 # Validate REVIEW.md structure and suggest domain-specific checklists
 # Ensures REVIEW.md exists, Verdict is present and valid, and suggests appropriate checklists
-# Works from: <project>/.cursor/scripts/ or template/scripts/
+# Works from: <project>/.cursor/scripts/ or scripts/ at repository root
 # Resolves directories relative to script location only (no pwd guessing)
 
 set -euo pipefail
@@ -13,8 +13,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Resolve directories relative to script location
 # Case A: target project: <project>/.cursor/scripts/review-check.sh
 #         → work dir is <project>/.cursor/work, memory dir is <project>/.cursor/memory
-# Case B: template repo: template/scripts/review-check.sh
-#         → work dir is template/.cursor/work, memory dir is template/.cursor/memory
+# Case B: repository root: scripts/review-check.sh
+#         → work dir is .cursor/work, memory dir is .cursor/memory
 if [ "$(basename "$(dirname "$SCRIPT_DIR")")" = ".cursor" ]; then
     # Case A: Running from target project
     CURSOR_DIR="$(dirname "$SCRIPT_DIR")"

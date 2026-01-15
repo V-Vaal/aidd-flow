@@ -36,8 +36,8 @@ VALIDATOR="$SCRIPT_DIR/validate-intake.sh"
 # Resolve test directory relative to script location
 # Case A: target project: <project>/.cursor/scripts/test-validate-intake.sh
 #         → work dir is <project>/.cursor/work (parent of scripts/, sibling of rules/)
-# Case B: template repo: template/scripts/test-validate-intake.sh
-#         → work dir is template/.cursor/work (sibling of scripts/)
+# Case B: repository root: scripts/test-validate-intake.sh
+#         → work dir is .cursor/work (sibling of scripts/)
 if [ "$(basename "$(dirname "$SCRIPT_DIR")")" = ".cursor" ]; then
     # Case A: Running from target project
     CURSOR_DIR="$(dirname "$SCRIPT_DIR")"

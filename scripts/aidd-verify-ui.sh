@@ -3,22 +3,22 @@
 # AIDD Verify UI: Lightweight smoke test for frontend
 # Runs headless browser tests and captures console/network errors
 # Optional: requires Playwright or Puppeteer
-# Designed to run from <project>/.cursor/scripts/ or template/scripts/
+# Designed to run from <project>/.cursor/scripts/ or scripts/ at repository root
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Detect if we're in a target project (.cursor/scripts/) or template (template/scripts/)
+# Detect if we're in a target project (.cursor/scripts/) or repository root (scripts/)
 if [ "$(basename "$(dirname "$SCRIPT_DIR")")" = ".cursor" ]; then
     # Running from target project: <project>/.cursor/scripts/
     CURSOR_DIR="$(dirname "$SCRIPT_DIR")"
     PROJECT_ROOT="$(cd "$CURSOR_DIR/.." && pwd)"
 else
-    # Running from template: template/scripts/
-    TEMPLATE_DIR="$(dirname "$SCRIPT_DIR")"
-    PROJECT_ROOT="$(cd "$TEMPLATE_DIR/.." && pwd)"
-    CURSOR_DIR="$TEMPLATE_DIR/.cursor"
+    # Running from repository root: scripts/
+    REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+    PROJECT_ROOT="$REPO_ROOT"
+    CURSOR_DIR="$REPO_ROOT/.cursor"
 fi
 
 # Colors

@@ -4,7 +4,7 @@
 # Runs: validate-rules + lint/test hooks if detected
 # Optional flags: --plan (validate PLAN.md), --review (validate REVIEW.md)
 # Prints next actions
-# Designed to run from <project>/.cursor/scripts/ or template/scripts/
+# Designed to run from <project>/.cursor/scripts/ or scripts/ at repository root
 #
 # Usage:
 #   aidd-check.sh [--plan] [--review]
@@ -41,22 +41,22 @@ for arg in "$@"; do
     esac
 done
 
-# Detect if we're in a target project (.cursor/scripts/) or template (template/scripts/)
-IS_TEMPLATE_MODE=0
+# Detect if we're in a target project (.cursor/scripts/) or repository root (scripts/)
+IS_REPO_MODE=0
 if [ "$(basename "$(dirname "$SCRIPT_DIR")")" = ".cursor" ]; then
     # Running from target project: <project>/.cursor/scripts/
     CURSOR_DIR="$(dirname "$SCRIPT_DIR")"
     PROJECT_ROOT="$(cd "$CURSOR_DIR/.." && pwd)"
 else
-    # Running from template: template/scripts/
-    IS_TEMPLATE_MODE=1
-    TEMPLATE_DIR="$(dirname "$SCRIPT_DIR")"
-    PROJECT_ROOT="$(cd "$TEMPLATE_DIR/.." && pwd)"
-    CURSOR_DIR="$TEMPLATE_DIR/.cursor"
+    # Running from repository root: scripts/
+    IS_REPO_MODE=1
+    REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+    PROJECT_ROOT="$REPO_ROOT"
+    CURSOR_DIR="$REPO_ROOT/.cursor"
 fi
 
 # Verify PROJECT_ROOT exists before changing directory (only in target project mode)
-if [ "$IS_TEMPLATE_MODE" -eq 0 ]; then
+if [ "$IS_REPO_MODE" -eq 0 ]; then
     if [ ! -d "$PROJECT_ROOT" ]; then
         echo -e "${RED}Error: Project root directory does not exist: $PROJECT_ROOT${NC}"
         echo -e "${RED}  Script location: $SCRIPT_DIR${NC}"
@@ -71,7 +71,7 @@ echo -e "${BLUE}=== AIDD Check ===${NC}"
 echo ""
 
 # Template mode: only validate template structure
-if [ "$IS_TEMPLATE_MODE" -eq 1 ]; then
+if [ "$IS_REPO_MODE" -eq 1 ]; then
     echo -e "${BLUE}[Template Mode] Validating AIDD template structure...${NC}"
     echo -e "${YELLOW}template mode: project lint/tests skipped${NC}"
     echo ""
@@ -84,8 +84,8 @@ if [ "$IS_TEMPLATE_MODE" -eq 1 ]; then
             echo -e "${GREEN}✓ Rules validation passed${NC}"
         else
             echo -e "${RED}✗ Rules validation failed${NC}"
-            echo -e "${YELLOW}  To rerun validation: bash template/scripts/validate-rules.sh${NC}"
-            echo -e "${YELLOW}  Check template/.cursor/rules/ for issues${NC}"
+            echo -e "${YELLOW}  To rerun validation: bash scripts/validate-rules.sh${NC}"
+            echo -e "${YELLOW}  Check .cursor/rules/ for issues${NC}"
             ERRORS=$((ERRORS + 1))
         fi
     else
@@ -324,7 +324,7 @@ fi
 echo ""
 
 # 5. Optional: Validate PLAN.md (if --plan flag provided)
-if [ "$CHECK_PLAN" -eq 1 ] && [ "$IS_TEMPLATE_MODE" -eq 0 ]; then
+if [ "$CHECK_PLAN" -eq 1 ] && [ "$IS_REPO_MODE" -eq 0 ]; then
     echo -e "${BLUE}[5/6] Validating PLAN.md (optional)...${NC}"
     VALIDATE_PLAN_SCRIPT="$SCRIPT_DIR/validate-plan.sh"
     if [ -f "$VALIDATE_PLAN_SCRIPT" ]; then
@@ -345,7 +345,7 @@ if [ "$CHECK_PLAN" -eq 1 ] && [ "$IS_TEMPLATE_MODE" -eq 0 ]; then
 fi
 
 # 6. Optional: Validate REVIEW.md (if --review flag provided)
-if [ "$CHECK_REVIEW" -eq 1 ] && [ "$IS_TEMPLATE_MODE" -eq 0 ]; then
+if [ "$CHECK_REVIEW" -eq 1 ] && [ "$IS_REPO_MODE" -eq 0 ]; then
     echo -e "${BLUE}[6/6] Validating REVIEW.md (optional)...${NC}"
     REVIEW_CHECK_SCRIPT="$SCRIPT_DIR/review-check.sh"
     if [ -f "$REVIEW_CHECK_SCRIPT" ]; then

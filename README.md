@@ -53,12 +53,10 @@ This workflow focuses on **how to structure AI-assisted work** rather than code 
 
 ## Installation
 
-### Option 1: Use this repository directly
-
-If you want to use `aidd-flow` as a reference or to export the workflow to other projects:
+### Option 1: Clone this repository to use the workflow directly or as a reference for exporting to other projects:
 
 ```bash
-git clone https://github.com/owner/aidd-flow.git
+git clone https://github.com/V-Vaal/aidd-flow.git
 cd aidd-flow
 ```
 
@@ -70,7 +68,7 @@ If you want to apply this workflow to an existing project:
 
 ```bash
 # Clone this repository
-git clone https://github.com/owner/aidd-flow.git
+git clone https://github.com/V-Vaal/aidd-flow.git
 cd aidd-flow
 
 # Export the workflow to your target project
@@ -85,7 +83,7 @@ The export script copies all workflow files (commands, prompts, rules, scripts) 
 
 ## Quickstart
 
-The entry point is the `aidd.start` command in Cursor.
+The entry point is the `@aidd.start` command in Cursor.
 
 ### Prerequisites
 
@@ -225,7 +223,7 @@ When you export this workflow to a target project using `scripts/aidd-export.sh`
 ```yaml
 # AIDD Lock File
 timestamp: 2024-01-15T10:30:00Z
-source_remote: https://github.com/owner/aidd-flow
+source_remote: https://github.com/V-Vaal/aidd-flow
 source_commit: abc123def456...
 template_version: 1.0.0
 ```
