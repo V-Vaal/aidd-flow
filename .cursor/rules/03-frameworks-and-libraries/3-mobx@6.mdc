@@ -1,0 +1,34 @@
+---
+description: Apply MobX 6 state management patterns when managing application state in frontend applications. This rule enforces best practices for store organization, state management, computed values, actions, side effects, and testing. Use this rule for projects actively using MobX 6 for reactive state management.
+globs: apps/frontend/app/**/*.store.ts
+alwaysApply: false
+deprecated: true
+deprecatedSince: "2025-01-15"
+note: "MobX-specific rule. Mark as deprecated if MobX is not actively used. Consider removing or moving to 08-domain-specific-rules/ if needed."
+---
+
+Store Organization:
+- Group stores by domain feature
+- Use class-based store structure
+- Disallow MobX decorators
+- Inject dependencies via constructor
+- Provide stores to parent components
+
+State and Actions:
+- Use `makeAutoObservable` in constructor
+- Use `get` for computed values
+- Use `computed` for all derived state
+- Use `action.bound` for callbacks
+- Disallow magic values in state
+
+Side Effects and Reactions:
+- Use `runInAction` for async mutations
+- Prefer `reaction` over `autorun`
+- Isolate side effects in `reactions`
+
+Testing Stores:
+- Unit test every store
+- Mock dependencies in tests
+- Test `computed` and `reactions`
+- Test only store logic
+- Use strict, typed test params

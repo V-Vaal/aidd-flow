@@ -1,0 +1,61 @@
+# Secrets
+.env
+.env.local
+.env.*.local
+**/*.env
+
+# Cursor / local state
+.cursor/aidd.lock
+# AIDD runtime artifacts
+.cursor/work/
+.cursor/work/**
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.directory
+
+# Node / Python / Rust
+node_modules/
+.venv/
+venv/
+ENV/
+env/
+target/
+dist/
+build/
+out/
+.next/
+.nuxt/
+coverage/
+.nyc_output/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Backup files
+*.backup.*
+*.bak
+*.tmp
+*.temp
+
+# Logs
+*.log
+*.log.env
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace

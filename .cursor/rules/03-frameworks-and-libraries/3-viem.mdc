@@ -1,0 +1,85 @@
+---
+description: APPLY viem best practices WHEN using viem for blockchain interactions. Covers strict typing patterns (Address, Hex, bigint), safe encoding/decoding, ABI typing, error handling, RPC reliability, BigInt formatting, decimal handling, chain-aware clients, and never trusting UI state as on-chain truth.
+globs: **/*viem*.ts, **/*viem*.tsx, apps/frontend/**/*.ts, apps/frontend/**/*.tsx
+alwaysApply: false
+---
+
+Strict Typing:
+- Use Address type for all Ethereum addresses
+- Use Hex type for hex strings
+- Use bigint for all numeric values from chain
+- Never use number for chain values
+- Avoid implicit type coercions
+- Type ABI definitions explicitly
+- Use const assertions for ABI arrays
+
+Encoding and Decoding:
+- Use encodeFunctionData for function calls
+- Use decodeFunctionResult for return values
+- Validate encoded data before sending
+- Handle encoding errors explicitly
+- Use proper ABI types for encoding
+- Never manually construct calldata
+- Validate hex strings before decoding
+
+ABI Typing:
+- Define ABI types explicitly
+- Use const as const for ABI definitions
+- Type function parameters strictly
+- Type return values explicitly
+- Use viem type inference when available
+- Avoid any in ABI definitions
+
+Error Handling:
+- Handle RPC errors explicitly
+- Catch and handle network failures
+- Validate RPC responses before use
+- Use typed error handling
+- Never ignore RPC errors
+- Log RPC errors with context
+- Provide user-friendly error messages
+
+RPC Reliability:
+- Handle RPC timeouts explicitly
+- Implement retry logic for transient failures
+- Use fallback RPC providers when possible
+- Validate RPC response structure
+- Never assume RPC calls always succeed
+- Monitor RPC health and switch if needed
+
+BigInt Formatting:
+- Format BigInt values for display only
+- Never lose precision when formatting
+- Use formatUnits for token amounts
+- Use formatEther for ETH amounts
+- Keep raw BigInt values for calculations
+- Convert to string only for display
+- Handle very large BigInt values safely
+
+Decimal Handling:
+- Use parseUnits for user input
+- Specify decimals explicitly
+- Never assume token decimals
+- Handle 18 decimals as default but verify
+- Use formatUnits with correct decimals
+- Validate decimal ranges
+- Handle zero decimals explicitly
+
+Chain-Aware Clients:
+- Create chain-specific clients when needed
+- Validate chain ID before operations
+- Use chain-aware RPC endpoints
+- Handle chain switching explicitly
+- Never assume chain context
+- Verify chain compatibility
+- Use chain-specific constants
+
+On-Chain Truth:
+- Never trust UI state as on-chain truth
+- Always read from chain for critical data
+- Verify on-chain state after transactions
+- Use events to confirm state changes
+- Poll chain state when needed
+- Never cache critical on-chain data
+- Revalidate after every transaction
+- Treat indexers and subgraphs as eventually consistent, never authoritative

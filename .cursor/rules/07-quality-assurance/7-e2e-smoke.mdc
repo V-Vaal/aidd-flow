@@ -1,0 +1,78 @@
+---
+description: APPLY E2E smoke test best practices WHEN testing UI applications. Covers general guidance for UI smoke checks, browser verification, console/network error detection, and user flow testing. Playwright suggested but not mandatory.
+globs: apps/frontend/**, **/*.e2e.*, **/*.spec.ts, **/*.test.ts
+alwaysApply: false
+---
+
+Smoke Test Strategy:
+- Test critical user flows only
+- Keep smoke tests fast and focused
+- Test happy paths primarily
+- Verify core functionality works
+- Avoid testing implementation details
+- Run smoke tests in CI pipeline
+
+Browser Verification:
+- Always verify UI changes in actual browser
+- Check browser console for errors
+- Check network tab for failed requests
+- Test in multiple browsers if needed
+- Verify responsive behavior
+- Test with real user interactions
+- Never rely solely on unit tests for UI
+
+Console Error Detection:
+- Check for JavaScript errors in console
+- Check for React warnings (if React)
+- Check for network request failures
+- Verify no unhandled promise rejections
+- Check for memory leaks warnings
+- Monitor console during test execution
+
+Network Error Detection:
+- Verify all API calls succeed
+- Check for 4xx/5xx status codes
+- Verify CORS issues if applicable
+- Check for timeout errors
+- Verify authentication flows
+- Check for rate limiting issues
+
+User Flow Testing:
+- Test complete user journeys
+- Test critical paths end-to-end
+- Verify state persistence
+- Test error recovery flows
+- Test loading states
+- Test error states
+- Verify navigation works
+
+Playwright (Recommended):
+- Use Playwright for E2E testing
+- Write tests in TypeScript
+- Use page object pattern
+- Keep tests independent
+- Use fixtures for setup
+- Test in headless mode in CI
+- Capture screenshots on failure
+
+Alternative Tools:
+- Use Puppeteer if Playwright unavailable
+- Use Cypress for specific use cases
+- Use Selenium as last resort
+- Choose tool based on project needs
+
+Test Organization:
+- Group related tests using describe
+- Use descriptive test names
+- Follow Arrange-Act-Assert pattern
+- Keep tests focused and small
+- Avoid test interdependencies
+- Clean up test data after tests
+
+CI Integration:
+- Run smoke tests in CI pipeline
+- Fail build on smoke test failures
+- Run tests in headless mode
+- Capture screenshots on failure
+- Report test results clearly
+- Use appropriate timeouts
