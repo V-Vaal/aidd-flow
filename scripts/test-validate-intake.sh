@@ -10,7 +10,7 @@
 #   - Content type (real text vs template placeholders)
 #
 # Usage:
-#   From template directory: bash scripts/test-validate-intake.sh
+#   From repository root: bash scripts/test-validate-intake.sh
 #   Or make executable: chmod +x scripts/test-validate-intake.sh && ./scripts/test-validate-intake.sh
 #
 # Expected Output:
@@ -43,9 +43,9 @@ if [ "$(basename "$(dirname "$SCRIPT_DIR")")" = ".cursor" ]; then
     CURSOR_DIR="$(dirname "$SCRIPT_DIR")"
     TEST_DIR="$CURSOR_DIR/work"
 else
-    # Case B: Running from template
-    TEMPLATE_DIR="$(dirname "$SCRIPT_DIR")"
-    TEST_DIR="$TEMPLATE_DIR/.cursor/work"
+    # Case B: Running from repository root
+    REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+    TEST_DIR="$REPO_ROOT/.cursor/work"
 fi
 
 ORIGINAL_INTAKE="$TEST_DIR/INTAKE.md"

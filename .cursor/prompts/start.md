@@ -228,7 +228,7 @@ Run commands in order:
    - Produces `.cursor/work/PLAN.md` (draft)
 
 5. **aidd.validate**
-   - Runs `bash .cursor/scripts/validate-intake.sh`
+   - Runs `bash .cursor/scripts/validate-plan.sh`
    - **Gate**: If validation fails, stop and inform user
 
 **2A.6: Output next steps**
@@ -327,7 +327,7 @@ Display checklist:
 - **Exploratory mode**: No GitHub MCP required, audit-only
 
 ### Workflow Boundaries
-- **Do NOT skip validation gates**: Targeted mode must run validate-intake.sh
+- **Do NOT skip validation gates**: Targeted mode must run validate-intake.sh (after intake) and validate-plan.sh (before implementation)
 - **Do NOT create INTAKE/PLAN in Exploratory**: Only AUDIT.md
 - **Do NOT invent findings**: All findings must cite evidence (file paths, line numbers)
 
@@ -357,4 +357,4 @@ Display checklist:
 - **Mode B (Exploratory)**: audit → findings → convert to Targeted later
 - **Config**: `.cursor/work/github-signals.config.yml` (Targeted mode only)
 - **Target**: `.cursor/work/TARGET.md` (optional, both modes)
-- **Validation**: `bash .cursor/scripts/validate-intake.sh` (Targeted mode gate)
+- **Validation**: `bash .cursor/scripts/validate-intake.sh` (after intake), `bash .cursor/scripts/validate-plan.sh` (before implementation)

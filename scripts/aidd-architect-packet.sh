@@ -23,9 +23,9 @@ if [ "$(basename "$(dirname "$SCRIPT_DIR")")" = ".cursor" ]; then
     CURSOR_DIR="$(dirname "$SCRIPT_DIR")"
     WORK_DIR="$CURSOR_DIR/work"
 else
-    # Case B: Running from template
-    TEMPLATE_DIR="$(dirname "$SCRIPT_DIR")"
-    WORK_DIR="$TEMPLATE_DIR/.cursor/work"
+    # Case B: Running from repository root
+    REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+    WORK_DIR="$REPO_ROOT/.cursor/work"
 fi
 
 OUTPUT_FILE="$WORK_DIR/ARCHITECT_PACKET.md"

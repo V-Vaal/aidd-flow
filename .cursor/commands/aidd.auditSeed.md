@@ -23,7 +23,7 @@ Populate factual sections of AUDIT.md by analyzing the repository and GitHub sig
 1. Read `.cursor/work/AUDIT.md` to understand current state
 2. Check if `.cursor/work/github-signals.md` exists
 3. If github-signals.md exists, read it for External Signals data
-4. If github-signals.md missing, External Signals section remains template/empty
+4. If github-signals.md missing, leave the section empty / untouched
 
 ### Step 2: Populate Factual Repo Sections
 
@@ -110,7 +110,7 @@ Populate factual sections of AUDIT.md by analyzing the repository and GitHub sig
 - Copy facts exactly as they appear in github-signals.md
 
 **If `.cursor/work/github-signals.md` does NOT exist:**
-- Leave External Signals section as template/empty
+- Leave the External Signals section empty / untouched
 - Do NOT attempt to fetch GitHub data
 - Do NOT create github-signals.md
 

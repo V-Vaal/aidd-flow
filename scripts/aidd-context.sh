@@ -70,7 +70,7 @@ fi
 echo ""
 else
     echo "=== Repository Structure (key paths) ==="
-    find . -maxdepth 2 -type f -name "*.md" -o -name "*.json" -o -name "*.toml" -o -name "*.yml" -o -name "*.yaml" 2>/dev/null | grep -v node_modules | grep -v .git | head -20 || true
+    find . -maxdepth 2 -type f \( -name "*.md" -o -name "*.json" -o -name "*.toml" -o -name "*.yml" -o -name "*.yaml" \) 2>/dev/null | grep -v node_modules | grep -v .git | head -20 || true
     echo ""
 fi
 
@@ -141,7 +141,7 @@ echo "=== Key Configuration Files ==="
 # Documentation
 [ -f "README.md" ] && echo "✓ README.md (root)"
 [ -f "CHANGELOG.md" ] && echo "✓ CHANGELOG.md (root)"
-[ -f ".cursor/docs/workflow.md" ] && echo "✓ .cursor/docs/workflow.md"
+[ -f "docs/workflow.md" ] && echo "✓ docs/workflow.md"
 
 echo ""
 else
@@ -324,7 +324,7 @@ if [ -n "$REVIEW_DIR" ]; then
     CHECKLIST_COUNT=$(find "$REVIEW_DIR" -name "review-checklist-*.md" -type f 2>/dev/null | wc -l | tr -d ' ' || echo "0")
     if [ "$CHECKLIST_COUNT" -gt 0 ]; then
         echo "=== Review Checklists Available ==="
-        find "$REVIEW_DIR" -name "review-checklist-*.md" -type f 2>/dev/null | while read -r checklist; do
+        find "$REVIEW_DIR" -name "review-checklist-*.md" -type f 2>/dev/null -print0 | while IFS= read -r -d '' checklist; do
             echo "  - $(basename "$checklist")"
         done
         echo ""

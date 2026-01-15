@@ -22,11 +22,11 @@ if [ "$(basename "$(dirname "$SCRIPT_DIR")")" = ".cursor" ]; then
     MEMORY_DIR="$CURSOR_DIR/memory"
     REVIEW_DIR="$CURSOR_DIR/review"
 else
-    # Case B: Running from template
-    TEMPLATE_DIR="$(dirname "$SCRIPT_DIR")"
-    WORK_DIR="$TEMPLATE_DIR/.cursor/work"
-    MEMORY_DIR="$TEMPLATE_DIR/.cursor/memory"
-    REVIEW_DIR="$TEMPLATE_DIR/.cursor/review"
+    # Case B: Running from repository root
+    REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+    WORK_DIR="$REPO_ROOT/.cursor/work"
+    MEMORY_DIR="$REPO_ROOT/.cursor/memory"
+    REVIEW_DIR="$REPO_ROOT/.cursor/review"
 fi
 
 REVIEW_FILE="$WORK_DIR/REVIEW.md"

@@ -37,7 +37,6 @@ if [ "$(basename "$(dirname "$SCRIPT_DIR")")" = ".cursor" ]; then
     echo -e "${YELLOW}Warning: This script is typically run from scripts/ at repository root${NC}"
     echo -e "${YELLOW}  Detected location: .cursor/scripts/${NC}"
     echo -e "${YELLOW}  Assuming repository root is: ${REPO_ROOT}${NC}"
-    REPO_ROOT="$REPO_ROOT"
 else
     # Running from scripts/ at repository root (expected)
     REPO_ROOT="$(dirname "$SCRIPT_DIR")"

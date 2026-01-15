@@ -20,9 +20,9 @@ if [ "$(basename "$(dirname "$SCRIPT_DIR")")" = ".cursor" ]; then
     CURSOR_DIR="$(dirname "$SCRIPT_DIR")"
     RULES_DIR="$CURSOR_DIR/rules"
 else
-    # Case B: Running from template
-    TEMPLATE_DIR="$(dirname "$SCRIPT_DIR")"
-    RULES_DIR="$TEMPLATE_DIR/.cursor/rules"
+    # Case B: Running from repository root
+    REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+    RULES_DIR="$REPO_ROOT/.cursor/rules"
 fi
 
 ERRORS=0
@@ -197,10 +197,16 @@ while IFS= read -r -d '' file; do
     # Check for deprecated field (warning only, tolerate leading whitespace and spaces)
     if echo "$FRONTMATTER" | grep -qE "^[[:space:]]*deprecated[[:space:]]*:[[:space:]]*true"; then
         REPLACED_BY=$(echo "$FRONTMATTER" | grep -E "^[[:space:]]*replacedBy[[:space:]]*:" | sed 's/.*replacedBy[[:space:]]*:[[:space:]]*//' | tr -d '"' | tr -d "'" || echo "")
+        # Allow deprecated=true without replacedBy for framework/library rules (intentionally deprecated)
+        case "$file" in
+            *"03-frameworks-and-libraries"*) IS_FRAMEWORK_RULE=yes ;;
+            *) IS_FRAMEWORK_RULE=no ;;
+        esac
         if [ -n "$REPLACED_BY" ]; then
             echo -e "${YELLOW}Warning: ${filename} is deprecated, replaced by ${REPLACED_BY}${NC}"
             WARNINGS=$((WARNINGS + 1))
-        else
+        elif [ "$IS_FRAMEWORK_RULE" = "no" ]; then
+            # Only warn if not a framework/library rule (those are intentionally deprecated without replacement)
             echo -e "${YELLOW}Warning: ${filename} is deprecated but no replacement specified${NC}"
             WARNINGS=$((WARNINGS + 1))
         fi

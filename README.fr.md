@@ -58,7 +58,7 @@ Ce workflow se concentre sur **comment structurer le travail assisté par IA** p
 Si vous voulez utiliser `aidd-flow` comme template ou référence :
 
 ```bash
-git clone <url-de-ce-repo>
+git clone https://github.com/V-Vaal/aidd-flow.git
 cd aidd-flow
 ```
 
@@ -70,7 +70,7 @@ Si vous voulez appliquer ce workflow à un projet existant :
 
 ```bash
 # Cloner ce dépôt
-git clone <url-de-ce-repo>
+git clone https://github.com/V-Vaal/aidd-flow.git
 cd aidd-flow
 
 # Exporter le workflow vers votre projet cible
@@ -85,7 +85,7 @@ Le script d'export copie tous les fichiers du workflow (commandes, prompts, règ
 
 ## Démarrage rapide
 
-Le point d'entrée est la commande `aidd.start` dans Cursor.
+Le point d'entrée est la commande `@aidd.start` dans Cursor.
 
 ### Prérequis
 

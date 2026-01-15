@@ -223,7 +223,7 @@ When you export this workflow to a target project using `scripts/aidd-export.sh`
 ```yaml
 # AIDD Lock File
 timestamp: 2024-01-15T10:30:00Z
-source_remote: https://github.com/V-Vaal/aidd-flow
+source_remote: https://github.com/owner/aidd-flow
 source_commit: abc123def456...
 template_version: 1.0.0
 ```

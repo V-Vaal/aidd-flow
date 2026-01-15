@@ -71,10 +71,10 @@ Rules Validation:
 - Run rules validation script in CI
 - Validate Cursor rules structure and frontmatter
 - Fail build on rules validation errors
-- Use template/scripts/validate-rules.sh for validation
+- Use scripts/validate-rules.sh for validation
 - Example GitHub Actions step:
   ```yaml
   - name: Validate Cursor Rules
     run: |
-      cd template && bash scripts/validate-rules.sh
+      bash scripts/validate-rules.sh
   ```
