@@ -1,225 +1,108 @@
 #!/bin/bash
 
-# Validate Cursor rules structure and frontmatter
-# Ensures all .mdc files have proper frontmatter and no duplicate filenames
-# Works from: <project>/.cursor/scripts/ or scripts/ at repository root
-# Resolves rules directory relative to script location only (no pwd guessing)
+# Validate rules structure
+# Ensures all .md files in rules/ have a top-level heading and no duplicate filenames
+# Run from repository root: bash scripts/validate-rules.sh
 
 set -euo pipefail
 
-# Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-# Resolve rules directory relative to script location
-# Case A: target project: <project>/.cursor/scripts/validate-rules.sh
-#         → rules dir is <project>/.cursor/rules (parent of scripts/)
-# Case B: repository root: scripts/validate-rules.sh
-#         → rules dir is .cursor/rules (sibling of scripts/)
-if [ "$(basename "$(dirname "$SCRIPT_DIR")")" = ".cursor" ]; then
-    # Case A: Running from target project
-    CURSOR_DIR="$(dirname "$SCRIPT_DIR")"
-    RULES_DIR="$CURSOR_DIR/rules"
-else
-    # Case B: Running from repository root
-    REPO_ROOT="$(dirname "$SCRIPT_DIR")"
-    RULES_DIR="$REPO_ROOT/.cursor/rules"
-fi
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+RULES_DIR="$REPO_ROOT/rules"
 
 ERRORS=0
 WARNINGS=0
 
-# Colors for output
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
 GREEN='\033[0;32m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-echo "Validating Cursor rules in ${RULES_DIR}..."
+echo "Validating rules in ${RULES_DIR}..."
 
-# Check if rules directory exists
 if [ ! -d "$RULES_DIR" ]; then
     echo -e "${RED}Error: Rules directory not found${NC}"
     echo -e "${RED}  Expected: ${RULES_DIR}${NC}"
-    echo -e "${RED}  Script location: ${SCRIPT_DIR}${NC}"
-    if [ "$(basename "$(dirname "$SCRIPT_DIR")")" = ".cursor" ]; then
-        echo -e "${RED}  This script should be in <project>/.cursor/scripts/${NC}"
-        echo -e "${RED}  Action: Ensure .cursor/rules/ exists in your project${NC}"
-    else
-        echo -e "${RED}  This script should be in scripts/ at repository root${NC}"
-        echo -e "${RED}  Action: Ensure .cursor/rules/ exists in repository root${NC}"
-    fi
+    echo -e "${RED}  Action: Ensure rules/ exists in repository root${NC}"
     exit 1
 fi
 
-# Find all .mdc files using null-delimited output for robustness
-MDC_COUNT=0
+MD_COUNT=0
 while IFS= read -r -d '' file; do
-    MDC_COUNT=$((MDC_COUNT + 1))
-done < <(find "$RULES_DIR" -name "*.mdc" -type f -print0 2>/dev/null || true)
+    # Skip .gitkeep and INDEX.md
+    filename=$(basename "$file")
+    [[ "$filename" == ".gitkeep" || "$filename" == "INDEX.md" ]] && continue
+    MD_COUNT=$((MD_COUNT + 1))
+done < <(find "$RULES_DIR" -name "*.md" -type f -print0 2>/dev/null || true)
 
-if [ "$MDC_COUNT" -eq 0 ]; then
-    echo -e "${YELLOW}Warning: No .mdc files found in ${RULES_DIR}${NC}"
+if [ "$MD_COUNT" -eq 0 ]; then
+    echo -e "${YELLOW}Warning: No rule .md files found in ${RULES_DIR}${NC}"
     exit 0
 fi
 
-# Check for duplicate filenames (Bash 3 compatible: use sort/uniq)
-echo "Checking for duplicate filenames..."
-# Build a list of "basename|fullpath" entries, sort by basename, find duplicates
+echo "Found ${MD_COUNT} rule file(s). Checking for duplicate filenames..."
+
+# Check for duplicate filenames
 TEMP_LIST=$(mktemp) || exit 1
 DUP_BASENAMES_FILE=$(mktemp) || exit 1
-
 trap 'rm -f "${TEMP_LIST:-}" "${DUP_BASENAMES_FILE:-}"' EXIT
 
-# Create list of basename|fullpath
 while IFS= read -r -d '' file; do
     filename=$(basename "$file")
+    [[ "$filename" == ".gitkeep" || "$filename" == "INDEX.md" ]] && continue
     echo "${filename}|${file}" >> "$TEMP_LIST"
-done < <(find "$RULES_DIR" -name "*.mdc" -type f -print0 2>/dev/null || true)
+done < <(find "$RULES_DIR" -name "*.md" -type f -print0 2>/dev/null || true)
 
-# Find duplicates using direct pipeline (avoid storing large lists in variables)
 cut -d'|' -f1 "$TEMP_LIST" | sort | uniq -d > "$DUP_BASENAMES_FILE" || true
 
 if [ -s "$DUP_BASENAMES_FILE" ]; then
     echo -e "${RED}Error: Duplicate filenames found:${NC}"
     ERRORS=$((ERRORS + 1))
-    
-    # Process each duplicate basename
     while IFS= read -r dup_basename; do
         [ -z "$dup_basename" ] && continue
         echo -e "${RED}  ${dup_basename}${NC}"
-        
-        # Use awk to match first field exactly (safe for special characters)
-        # Count total matches and print first 2 in a single pass
-        TOTAL_MATCHES=$(awk -F'|' -v name="$dup_basename" '$1 == name {count++} END {print count+0}' "$TEMP_LIST")
-        
-        # Print exactly 2 paths minimum (no temp file, use awk to print directly)
-        awk -F'|' -v name="$dup_basename" -v red="$RED" -v nc="$NC" '
-            $1 == name {
-                if (count < 2) {
-                    printf "%s    → %s%s\n", red, $2, nc
-                    count++
-                }
-            }
-        ' "$TEMP_LIST"
-        
-        # If more than 2 files, show count
-        if [ "$TOTAL_MATCHES" -gt 2 ]; then
-            echo -e "${RED}    ... and $((TOTAL_MATCHES - 2)) more occurrence(s)${NC}"
-        fi
+        awk -F'|' -v name="$dup_basename" -v red="$RED" -v nc="$NC" \
+            '$1 == name { if (count < 2) { printf "%s    → %s%s\n", red, $2, nc; count++ } }' "$TEMP_LIST"
     done < "$DUP_BASENAMES_FILE"
 fi
 
-# Validate each .mdc file
-echo "Validating frontmatter in .mdc files..."
+# Validate each rule file: must have a top-level heading (# Title)
+echo "Validating rule file structure..."
 while IFS= read -r -d '' file; do
     filename=$(basename "$file")
-    
-    # Check that file starts with --- on line 1
+    [[ "$filename" == ".gitkeep" || "$filename" == "INDEX.md" ]] && continue
+
+    # Must not start with YAML frontmatter
     FIRST_LINE=$(head -n 1 "$file" 2>/dev/null || echo "")
-    if [ "$FIRST_LINE" != "---" ]; then
-        echo -e "${RED}Error: ${filename} missing frontmatter (file must start with --- on line 1)${NC}"
-        echo -e "${RED}  Action: Add frontmatter block starting with --- at the beginning of the file${NC}"
+    if [ "$FIRST_LINE" = "---" ]; then
+        echo -e "${RED}Error: ${filename} still contains YAML frontmatter (starts with ---)${NC}"
+        echo -e "${RED}  Action: Remove the frontmatter block — rules are plain Markdown${NC}"
         ERRORS=$((ERRORS + 1))
         continue
     fi
-    
-    # Find the second --- delimiter (closing frontmatter)
-    # Count occurrences of --- on separate lines, find line number of second occurrence
-    SECOND_DELIMITER_LINE=$(awk '/^---$/{if(++count==2){print NR; exit}}' "$file" 2>/dev/null || echo "")
-    
-    if [ -z "$SECOND_DELIMITER_LINE" ]; then
-        echo -e "${RED}Error: ${filename} has incomplete frontmatter (missing closing --- delimiter)${NC}"
-        echo -e "${RED}  Action: Ensure frontmatter is properly closed with --- on a separate line${NC}"
-        ERRORS=$((ERRORS + 1))
-        continue
-    fi
-    
-    # Check if there are additional --- delimiters after the closing one (warning only)
-    # Ignore --- that appear inside fenced code blocks (``` or ~~~)
-    # Use awk to track code block state and count only --- outside code blocks
-    TOTAL_DELIMITERS=$(awk '
-        BEGIN { in_code_block = 0; code_block_marker = ""; count = 0 }
-        # Detect fenced code block start/end (``` or ~~~)
-        /^```/ || /^~~~/ {
-            if (in_code_block == 0) {
-                # Starting a code block
-                in_code_block = 1
-                code_block_marker = substr($0, 1, 3)
-            } else if (substr($0, 1, 3) == code_block_marker) {
-                # Ending the code block (same marker)
-                in_code_block = 0
-                code_block_marker = ""
-            }
-            next
-        }
-        # Count --- only if not inside a code block
-        /^---$/ {
-            if (in_code_block == 0) {
-                count++
-            }
-        }
-        END { print count }
-    ' "$file" 2>/dev/null || echo "0")
-    
-    if [ "$TOTAL_DELIMITERS" -gt 2 ]; then
-        echo -e "${YELLOW}Warning: ${filename} has additional --- delimiter(s) after frontmatter (found ${TOTAL_DELIMITERS} total)${NC}"
-        echo -e "${YELLOW}  This may indicate formatting issues, but is not an error${NC}"
+
+    # Must have at least one heading
+    HAS_HEADING=$(grep -c "^#" "$file" 2>/dev/null || echo "0")
+    if [ "$HAS_HEADING" -eq 0 ]; then
+        echo -e "${YELLOW}Warning: ${filename} has no Markdown heading${NC}"
+        echo -e "${YELLOW}  Suggestion: Add a # Title at the top of the file${NC}"
         WARNINGS=$((WARNINGS + 1))
     fi
-    
-    # Extract frontmatter (between first two ---)
-    FRONTMATTER=$(awk '/^---$/{if(++count==1)next; if(count==2)exit} count' "$file" 2>/dev/null || echo "")
-    
-    if [ -z "$FRONTMATTER" ]; then
-        echo -e "${RED}Error: ${filename} frontmatter extraction failed${NC}"
-        echo -e "${RED}  Action: Check file format and ensure frontmatter is valid YAML${NC}"
-        ERRORS=$((ERRORS + 1))
-        continue
-    fi
-    
-    # Check for required fields (tolerate leading whitespace and spaces before colon)
-    if ! echo "$FRONTMATTER" | grep -qE "^[[:space:]]*description[[:space:]]*:"; then
-        echo -e "${RED}Error: ${filename} missing required 'description' field in frontmatter${NC}"
-        echo -e "${RED}  Action: Add 'description: <your description>' to the frontmatter${NC}"
-        ERRORS=$((ERRORS + 1))
-    fi
-    
-    # Check for either globs or alwaysApply (tolerate leading whitespace and spaces before colon)
-    HAS_GLOBS=$(echo "$FRONTMATTER" | grep -qE "^[[:space:]]*globs[[:space:]]*:" && echo "yes" || echo "no")
-    HAS_ALWAYS_APPLY=$(echo "$FRONTMATTER" | grep -qE "^[[:space:]]*alwaysApply[[:space:]]*:" && echo "yes" || echo "no")
-    
-    if [ "$HAS_GLOBS" = "no" ] && [ "$HAS_ALWAYS_APPLY" = "no" ]; then
-        echo -e "${RED}Error: ${filename} missing both 'globs' and 'alwaysApply' fields${NC}"
-        echo -e "${RED}  Action: Add either 'globs: [\"pattern\"]' or 'alwaysApply: true' to frontmatter${NC}"
-        ERRORS=$((ERRORS + 1))
-    fi
-    
-    # Check for deprecated field (warning only, tolerate leading whitespace and spaces)
-    if echo "$FRONTMATTER" | grep -qE "^[[:space:]]*deprecated[[:space:]]*:[[:space:]]*true"; then
-        REPLACED_BY=$(echo "$FRONTMATTER" | grep -E "^[[:space:]]*replacedBy[[:space:]]*:" | sed 's/.*replacedBy[[:space:]]*:[[:space:]]*//' | tr -d '"' | tr -d "'" || echo "")
-        # Allow deprecated=true without replacedBy for framework/library rules (intentionally deprecated)
-        case "$file" in
-            *"03-frameworks-and-libraries"*) IS_FRAMEWORK_RULE=yes ;;
-            *) IS_FRAMEWORK_RULE=no ;;
-        esac
-        if [ -n "$REPLACED_BY" ]; then
-            echo -e "${YELLOW}Warning: ${filename} is deprecated, replaced by ${REPLACED_BY}${NC}"
-            WARNINGS=$((WARNINGS + 1))
-        elif [ "$IS_FRAMEWORK_RULE" = "no" ]; then
-            # Only warn if not a framework/library rule (those are intentionally deprecated without replacement)
-            echo -e "${YELLOW}Warning: ${filename} is deprecated but no replacement specified${NC}"
-            WARNINGS=$((WARNINGS + 1))
-        fi
-    fi
-done < <(find "$RULES_DIR" -name "*.mdc" -type f -print0 2>/dev/null || true)
 
-# Summary
+    # Must not be empty
+    LINE_COUNT=$(wc -l < "$file" 2>/dev/null || echo "0")
+    if [ "$LINE_COUNT" -lt 3 ]; then
+        echo -e "${YELLOW}Warning: ${filename} appears to be empty or near-empty (${LINE_COUNT} lines)${NC}"
+        WARNINGS=$((WARNINGS + 1))
+    fi
+done < <(find "$RULES_DIR" -name "*.md" -type f -print0 2>/dev/null || true)
+
 echo ""
 if [ $ERRORS -eq 0 ] && [ $WARNINGS -eq 0 ]; then
-    echo -e "${GREEN}✓ Validation passed: All rules are valid${NC}"
+    echo -e "${GREEN}✓ Validation passed: All ${MD_COUNT} rule files are valid${NC}"
     exit 0
 elif [ $ERRORS -eq 0 ]; then
-    echo -e "${YELLOW}✓ Validation passed with ${WARNINGS} warning(s)${NC}"
+    echo -e "${YELLOW}✓ Validation passed with ${WARNINGS} warning(s) across ${MD_COUNT} files${NC}"
     exit 0
 else
     echo -e "${RED}✗ Validation failed: ${ERRORS} error(s), ${WARNINGS} warning(s)${NC}"

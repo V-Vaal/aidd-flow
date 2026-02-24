@@ -1,0 +1,83 @@
+# 8 web3 security patterns
+
+EIP-712 Signing Security:
+- Use EIP-712 for structured data signing
+- Define domain separator explicitly
+- Include chainId in domain separator
+- Include verifyingContract in domain
+- Use proper type definitions for messages
+- Validate signature format before verification
+- Never sign raw messages when EIP-712 is available
+
+Replay Protection:
+- Include chainId in all signatures
+- Use nonces for replay protection
+- Validate nonces on-chain
+- Reject signatures from wrong chain
+- Use domain separation for different contexts
+- Never reuse signatures across chains
+- Implement nonce tracking and validation
+
+Nonce Management:
+- Use sequential nonces for transactions
+- Validate nonce on-chain before execution
+- Handle nonce gaps appropriately
+- Never skip nonces in sequence
+- Track nonce state accurately
+- Handle nonce conflicts gracefully
+- Reset nonces only when necessary
+
+Expiry Handling:
+- Include expiry timestamps in signatures
+- Validate expiry before processing
+- Reject expired signatures immediately
+- Use reasonable expiry windows
+- Handle expiry edge cases
+- Show expiry information to users
+- Never process expired signatures
+
+Chain Binding:
+- Bind signatures to specific chain IDs
+- Validate chain ID in signature verification
+- Reject signatures from wrong chains
+- Include chain context in all signatures
+- Never allow cross-chain signature reuse
+- Verify chain compatibility before signing
+- Handle chain switching explicitly
+
+Phishing-Resistant UX:
+- Show full transaction details before signing
+- Display contract addresses clearly
+- Show function names and parameters
+- Warn users about suspicious transactions
+- Use transaction simulation when possible
+- Display expected outcomes to users
+- Never hide critical transaction details
+
+Signature Verification:
+- Verify signatures on-chain when possible
+- Validate signature format before verification
+- Handle signature verification failures
+- Use proper cryptographic verification
+- Never trust client-side verification alone
+- Verify signatures match expected signer
+- Handle signature edge cases
+
+Message Formatting:
+- Use consistent message formatting
+- Include all relevant context in messages
+- Never omit critical fields from messages
+- Validate message structure before signing
+- Use type-safe message definitions
+- Document message format clearly
+- Handle message versioning
+
+Security Boundaries:
+- Never sign arbitrary data
+- Validate all signature inputs
+- Sanitize user input before signing
+- Reject malformed signature requests
+- Implement rate limiting for signatures
+- Log signature attempts for security
+- Monitor for suspicious signing patterns
+- Assume compromised frontend until verified on-chain

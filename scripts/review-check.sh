@@ -2,8 +2,7 @@
 
 # Validate REVIEW.md structure and suggest domain-specific checklists
 # Ensures REVIEW.md exists, Verdict is present and valid, and suggests appropriate checklists
-# Works from: <project>/.cursor/scripts/ or scripts/ at repository root
-# Resolves directories relative to script location only (no pwd guessing)
+# Run from repository root: bash scripts/review-check.sh
 
 set -euo pipefail
 
@@ -11,23 +10,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Resolve directories relative to script location
-# Case A: target project: <project>/.cursor/scripts/review-check.sh
-#         → work dir is <project>/.cursor/work, memory dir is <project>/.cursor/memory
-# Case B: repository root: scripts/review-check.sh
-#         → work dir is .cursor/work, memory dir is .cursor/memory
-if [ "$(basename "$(dirname "$SCRIPT_DIR")")" = ".cursor" ]; then
-    # Case A: Running from target project
-    CURSOR_DIR="$(dirname "$SCRIPT_DIR")"
-    WORK_DIR="$CURSOR_DIR/work"
-    MEMORY_DIR="$CURSOR_DIR/memory"
-    REVIEW_DIR="$CURSOR_DIR/review"
-else
-    # Case B: Running from repository root
-    REPO_ROOT="$(dirname "$SCRIPT_DIR")"
-    WORK_DIR="$REPO_ROOT/.cursor/work"
-    MEMORY_DIR="$REPO_ROOT/.cursor/memory"
-    REVIEW_DIR="$REPO_ROOT/.cursor/review"
-fi
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+WORK_DIR="$REPO_ROOT/aidd/work"
+MEMORY_DIR="$REPO_ROOT/aidd/memory"
+REVIEW_DIR="$REPO_ROOT/aidd/review"
 
 REVIEW_FILE="$WORK_DIR/REVIEW.md"
 TECH_CONTEXT="$MEMORY_DIR/techContext.md"
@@ -48,7 +34,7 @@ echo "Validating REVIEW.md..."
 if [ ! -f "$REVIEW_FILE" ]; then
     echo -e "${RED}Error: REVIEW.md not found${NC}"
     echo -e "${RED}  Expected: ${REVIEW_FILE}${NC}"
-    echo -e "${RED}  Action: Create REVIEW.md in .cursor/work/ before proceeding${NC}"
+    echo -e "${RED}  Action: Create REVIEW.md in aidd/work/ before proceeding${NC}"
     exit 1
 fi
 
@@ -163,4 +149,3 @@ else
     echo -e "${RED}  Action: Fix the errors above and rerun validation${NC}"
     exit 1
 fi
-

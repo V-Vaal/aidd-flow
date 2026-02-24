@@ -1,0 +1,92 @@
+# 8 web3 frontend patterns
+
+Events vs State:
+- Prefer events for historical data
+- Use state reads for current balances
+- Combine events and state for accuracy
+- Never rely solely on UI state
+- Verify state changes with events
+- Use events to detect state changes
+- Index events for performance
+
+Confirmation Strategy:
+- Wait for minimum confirmations before showing success
+- Never show finality before confirmations
+- Use configurable confirmation thresholds
+- Show pending state during confirmations
+- Display confirmation count to users
+- Handle confirmation failures
+- Consider chain-specific confirmation times
+
+Reorg Awareness:
+- Never assume transactions are final immediately
+- Wait for sufficient confirmations
+- Handle reorg scenarios gracefully
+- Verify transaction inclusion after confirmations
+- Show reorg warnings when applicable
+- Poll for transaction status
+- Handle deep reorgs appropriately
+
+Indexing vs Direct Reads:
+- Use indexing for historical queries
+- Use direct reads for current state
+- Combine both approaches when needed
+- Cache indexed data appropriately
+- Poll direct reads for freshness
+- Use events to trigger reads
+- Balance performance and accuracy
+
+Optimistic UI Constraints:
+- Only use optimistic UI for non-critical updates
+- Never use optimistic UI for financial operations
+- Revert optimistic updates on failure
+- Verify optimistic updates on-chain
+- Show pending state during optimistic updates
+- Handle optimistic update failures
+- Never trust optimistic state as truth
+- Optimistic UI must never affect amounts, balances, or permissions
+
+Safe Display of Balances:
+- Format balances with correct decimals
+- Never lose precision when displaying
+- Show loading state while fetching
+- Handle zero balances explicitly
+- Display balances with appropriate precision
+- Use formatUnits with correct decimals
+- Never assume token decimals
+
+Safe Display of Amounts:
+- Validate amounts before displaying
+- Handle very large amounts safely
+- Show amounts with appropriate formatting
+- Use locale-aware number formatting
+- Display currency symbols correctly
+- Handle negative amounts explicitly
+- Show error state for invalid amounts
+
+Minimum-Confirmations Mindset:
+- Always wait for minimum confirmations
+- Configure confirmation thresholds per operation
+- Show confirmation progress to users
+- Never mark transactions as final prematurely
+- Handle confirmation timeouts
+- Consider chain-specific requirements
+- Document confirmation requirements
+
+Avoiding Premature Finality:
+- Never show success before confirmations
+- Display pending state clearly
+- Show confirmation count
+- Warn users about potential reorgs
+- Verify on-chain state before finalizing
+- Handle edge cases in confirmation flow
+- Provide clear status indicators
+
+State Synchronization:
+- Sync UI state with on-chain state
+- Poll for state changes when needed
+- Use events to trigger state updates
+- Invalidate stale state data
+- Handle state synchronization errors
+- Show sync status to users
+- Never cache critical state indefinitely

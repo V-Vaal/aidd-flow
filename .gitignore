@@ -4,11 +4,12 @@
 .env.*.local
 **/*.env
 
-# Cursor / local state
-.cursor/aidd.lock
-# AIDD runtime artifacts
-.cursor/work/
-.cursor/work/**
+# AIDD runtime artifacts (agnostic paths)
+aidd/work/*
+!aidd/work/.gitkeep
+aidd/aidd.lock
+docs/plans/active/*
+!docs/plans/active/.gitkeep
 
 # OS
 .DS_Store

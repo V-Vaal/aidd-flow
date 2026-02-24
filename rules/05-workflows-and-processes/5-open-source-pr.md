@@ -1,0 +1,60 @@
+# 5 open source pr
+
+PR Title Format:
+- Use descriptive and concise titles
+- Include issue number if applicable
+- Use conventional commit prefixes when appropriate
+- Keep titles under 72 characters when possible
+- Make titles self-explanatory
+
+PR Body Format:
+- Link related issues explicitly
+- Describe changes and motivation clearly
+- List breaking changes if any
+- Include testing instructions
+- Add screenshots for UI changes
+- Document API changes if applicable
+- Reference related PRs or discussions
+
+Linked Issues:
+- Link to related issues in PR body
+- Use "Fixes #123" or "Closes #123" format
+- Reference issues that are addressed
+- Link to related discussions
+- Update issue status when PR is merged
+
+Test Requirements:
+- All tests must pass before merge
+- Add tests for new functionality
+- Update tests for changed functionality
+- Ensure test coverage is maintained
+- Run tests locally before submitting
+- Include integration tests when relevant
+- Test edge cases and error conditions
+
+Security Checklist:
+- Review security implications of changes
+- Check for sensitive data exposure
+- Validate input sanitization
+- Review authentication and authorization
+- Check dependency vulnerabilities
+- Verify no secrets are committed
+- Review error handling for information leakage
+
+Documentation Updates:
+- Update relevant documentation
+- Add examples for new features
+- Update API documentation if changed
+- Keep README current
+- Document breaking changes clearly
+- Update changelog when applicable
+- Add migration guides if needed
+
+Review Guidance:
+- Review code for correctness and security
+- Check adherence to project standards
+- Verify tests are comprehensive
+- Review documentation completeness
+- Check for performance implications
+- Verify backward compatibility
+- Provide constructive feedback

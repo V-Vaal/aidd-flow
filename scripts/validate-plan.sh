@@ -2,8 +2,7 @@
 
 # Validate PLAN.md structure
 # Ensures PLAN.md exists and contains all required sections
-# Works from: <project>/.cursor/scripts/ or scripts/ at repository root
-# Resolves work directory relative to script location only (no pwd guessing)
+# Run from repository root: bash scripts/validate-plan.sh
 
 set -euo pipefail
 
@@ -11,19 +10,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Resolve work directory relative to script location
-# Case A: target project: <project>/.cursor/scripts/validate-plan.sh
-#         → work dir is <project>/.cursor/work (parent of scripts/, sibling of rules/)
-# Case B: repository root: scripts/validate-plan.sh
-#         → work dir is .cursor/work (sibling of scripts/)
-if [ "$(basename "$(dirname "$SCRIPT_DIR")")" = ".cursor" ]; then
-    # Case A: Running from target project
-    CURSOR_DIR="$(dirname "$SCRIPT_DIR")"
-    WORK_DIR="$CURSOR_DIR/work"
-else
-    # Case B: Running from repository root
-    REPO_ROOT="$(dirname "$SCRIPT_DIR")"
-    WORK_DIR="$REPO_ROOT/.cursor/work"
-fi
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+WORK_DIR="$REPO_ROOT/aidd/work"
 
 PLAN_FILE="$WORK_DIR/PLAN.md"
 
@@ -40,7 +28,7 @@ echo "Validating PLAN.md..."
 if [ ! -f "$PLAN_FILE" ]; then
     echo -e "${RED}Error: PLAN.md not found${NC}"
     echo -e "${RED}  Expected: ${PLAN_FILE}${NC}"
-    echo -e "${RED}  Action: Create PLAN.md in .cursor/work/ before proceeding${NC}"
+    echo -e "${RED}  Action: Create PLAN.md in aidd/work/ before proceeding${NC}"
     exit 1
 fi
 
@@ -97,4 +85,3 @@ else
     echo -e "${RED}  Action: Add the missing sections above and rerun validation${NC}"
     exit 1
 fi
-

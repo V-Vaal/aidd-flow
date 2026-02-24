@@ -4,7 +4,7 @@
 # Runs: validate-rules + lint/test hooks if detected
 # Optional flags: --plan (validate PLAN.md), --review (validate REVIEW.md)
 # Prints next actions
-# Designed to run from <project>/.cursor/scripts/ or scripts/ at repository root
+# Run from repository root: bash scripts/aidd-check.sh
 #
 # Usage:
 #   aidd-check.sh [--plan] [--review]
@@ -41,28 +41,10 @@ for arg in "$@"; do
     esac
 done
 
-# Detect if we're in a target project (.cursor/scripts/) or repository root (scripts/)
-IS_REPO_MODE=0
-if [ "$(basename "$(dirname "$SCRIPT_DIR")")" = ".cursor" ]; then
-    # Running from target project: <project>/.cursor/scripts/
-    CURSOR_DIR="$(dirname "$SCRIPT_DIR")"
-    PROJECT_ROOT="$(cd "$CURSOR_DIR/.." && pwd)"
-else
-    # Running from repository root: scripts/
-    IS_REPO_MODE=1
-    REPO_ROOT="$(dirname "$SCRIPT_DIR")"
-    PROJECT_ROOT="$REPO_ROOT"
-    CURSOR_DIR="$REPO_ROOT/.cursor"
-fi
-
-# Verify PROJECT_ROOT exists before changing directory (only in target project mode)
-if [ "$IS_REPO_MODE" -eq 0 ]; then
-    if [ ! -d "$PROJECT_ROOT" ]; then
-        echo -e "${RED}Error: Project root directory does not exist: $PROJECT_ROOT${NC}"
-        echo -e "${RED}  Script location: $SCRIPT_DIR${NC}"
-        exit 1
-    fi
-fi
+# Resolve repository root and key directories
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_ROOT="$REPO_ROOT"
+WORK_DIR="$REPO_ROOT/aidd/work"
 
 ERRORS=0
 WARNINGS=0
@@ -70,67 +52,10 @@ WARNINGS=0
 echo -e "${BLUE}=== AIDD Check ===${NC}"
 echo ""
 
-# Template mode: only validate template structure
-if [ "$IS_REPO_MODE" -eq 1 ]; then
-    echo -e "${BLUE}[Template Mode] Validating AIDD template structure...${NC}"
-    echo -e "${YELLOW}template mode: project lint/tests skipped${NC}"
-    echo ""
-    
-    # 1. Validate template rules
-    echo -e "${BLUE}[1/2] Validating template rules...${NC}"
-    VALIDATE_SCRIPT="$SCRIPT_DIR/validate-rules.sh"
-    if [ -f "$VALIDATE_SCRIPT" ]; then
-        if bash "$VALIDATE_SCRIPT"; then
-            echo -e "${GREEN}✓ Rules validation passed${NC}"
-        else
-            echo -e "${RED}✗ Rules validation failed${NC}"
-            echo -e "${YELLOW}  To rerun validation: bash scripts/validate-rules.sh${NC}"
-            echo -e "${YELLOW}  Check .cursor/rules/ for issues${NC}"
-            ERRORS=$((ERRORS + 1))
-        fi
-    else
-        echo -e "${YELLOW}SKIP: validate-rules.sh not found at $VALIDATE_SCRIPT${NC}"
-        echo -e "${YELLOW}  Reason: Script missing from expected location${NC}"
-        WARNINGS=$((WARNINGS + 1))
-    fi
-    echo ""
-    
-    # 2. Verify expected scripts exist
-    echo -e "${BLUE}[2/2] Verifying expected scripts...${NC}"
-    EXPECTED_SCRIPTS=("validate-rules.sh" "validate-plan.sh" "review-check.sh" "aidd-export.sh" "aidd-context.sh" "aidd-verify-ui.sh" "aidd-check.sh")
-    for script_name in "${EXPECTED_SCRIPTS[@]}"; do
-        script_path="$SCRIPT_DIR/$script_name"
-        if [ -f "$script_path" ]; then
-            echo -e "${GREEN}  ✓ $script_name${NC}"
-        else
-            echo -e "${YELLOW}  ⚠ $script_name not found${NC}"
-            WARNINGS=$((WARNINGS + 1))
-        fi
-    done
-    echo ""
-    
-    # Summary for template mode
-    echo -e "${BLUE}=== Summary ===${NC}"
-    echo ""
-    if [ $ERRORS -eq 0 ] && [ $WARNINGS -eq 0 ]; then
-        echo -e "${GREEN}✓ Template validation passed!${NC}"
-        echo -e "${GREEN}OK${NC}"
-        exit 0
-    elif [ $ERRORS -eq 0 ]; then
-        echo -e "${YELLOW}✓ Template validation passed with ${WARNINGS} warning(s)${NC}"
-        echo -e "${GREEN}OK${NC}"
-        exit 0
-    else
-        echo -e "${RED}✗ Template validation failed: ${ERRORS} error(s), ${WARNINGS} warning(s)${NC}"
-        exit 1
-    fi
-fi
-
-# Target project mode: full validation
 cd "$PROJECT_ROOT"
 
 # 1. Validate INTAKE.md (if exists)
-INTAKE_FILE="$CURSOR_DIR/work/INTAKE.md"
+INTAKE_FILE="$WORK_DIR/INTAKE.md"
 if [ -f "$INTAKE_FILE" ]; then
     echo -e "${BLUE}[1/5] Validating INTAKE.md...${NC}"
     VALIDATE_INTAKE_SCRIPT="$SCRIPT_DIR/validate-intake.sh"
@@ -139,8 +64,8 @@ if [ -f "$INTAKE_FILE" ]; then
             echo -e "${GREEN}✓ INTAKE.md validation passed${NC}"
         else
             echo -e "${RED}✗ INTAKE.md validation failed${NC}"
-            echo -e "${YELLOW}  To rerun validation: bash .cursor/scripts/validate-intake.sh${NC}"
-            echo -e "${YELLOW}  Check .cursor/work/INTAKE.md for missing or empty sections${NC}"
+            echo -e "${YELLOW}  To rerun validation: bash scripts/validate-intake.sh${NC}"
+            echo -e "${YELLOW}  Check aidd/work/INTAKE.md for missing or empty sections${NC}"
             ERRORS=$((ERRORS + 1))
         fi
     else
@@ -151,15 +76,15 @@ if [ -f "$INTAKE_FILE" ]; then
 fi
 
 # 2. Validate rules
-echo -e "${BLUE}[2/5] Validating Cursor rules...${NC}"
+echo -e "${BLUE}[2/5] Validating rules...${NC}"
 VALIDATE_SCRIPT="$SCRIPT_DIR/validate-rules.sh"
 if [ -f "$VALIDATE_SCRIPT" ]; then
     if bash "$VALIDATE_SCRIPT"; then
         echo -e "${GREEN}✓ Rules validation passed${NC}"
     else
         echo -e "${RED}✗ Rules validation failed${NC}"
-        echo -e "${YELLOW}  To rerun validation: bash .cursor/scripts/validate-rules.sh${NC}"
-        echo -e "${YELLOW}  Check .cursor/rules/ for issues${NC}"
+        echo -e "${YELLOW}  To rerun validation: bash scripts/validate-rules.sh${NC}"
+        echo -e "${YELLOW}  Check rules/ for issues${NC}"
         ERRORS=$((ERRORS + 1))
     fi
 else
@@ -169,8 +94,22 @@ else
 fi
 echo ""
 
-# 3. Detect project type and run appropriate checks
-echo -e "${BLUE}[3/5] Detecting project type...${NC}"
+# 3. Verify expected scripts exist
+echo -e "${BLUE}[3/5] Verifying expected scripts...${NC}"
+EXPECTED_SCRIPTS=("validate-rules.sh" "validate-plan.sh" "review-check.sh" "aidd-export.sh" "aidd-context.sh" "aidd-verify-ui.sh" "aidd-check.sh")
+for script_name in "${EXPECTED_SCRIPTS[@]}"; do
+    script_path="$SCRIPT_DIR/$script_name"
+    if [ -f "$script_path" ]; then
+        echo -e "${GREEN}  ✓ $script_name${NC}"
+    else
+        echo -e "${YELLOW}  ⚠ $script_name not found${NC}"
+        WARNINGS=$((WARNINGS + 1))
+    fi
+done
+echo ""
+
+# 4. Detect project type and run appropriate checks
+echo -e "${BLUE}[4/5] Detecting project type...${NC}"
 
 # Check for Node.js/TypeScript
 if [ -f "package.json" ]; then
@@ -306,8 +245,8 @@ fi
 
 echo ""
 
-# 4. Check git status
-echo -e "${BLUE}[4/5] Checking git status...${NC}"
+# 5. Check git status
+echo -e "${BLUE}[5/5] Checking git status...${NC}"
 if [ -d ".git" ] && command -v git &> /dev/null; then
     GIT_STATUS=$(git status --porcelain 2>/dev/null || echo "")
     if [ -n "$GIT_STATUS" ]; then
@@ -323,9 +262,9 @@ else
 fi
 echo ""
 
-# 5. Optional: Validate PLAN.md (if --plan flag provided)
-if [ "$CHECK_PLAN" -eq 1 ] && [ "$IS_REPO_MODE" -eq 0 ]; then
-    echo -e "${BLUE}[5/6] Validating PLAN.md (optional)...${NC}"
+# Optional: Validate PLAN.md (if --plan flag provided)
+if [ "$CHECK_PLAN" -eq 1 ]; then
+    echo -e "${BLUE}[+] Validating PLAN.md (optional)...${NC}"
     VALIDATE_PLAN_SCRIPT="$SCRIPT_DIR/validate-plan.sh"
     if [ -f "$VALIDATE_PLAN_SCRIPT" ]; then
         if bash "$VALIDATE_PLAN_SCRIPT" 2>/dev/null; then
@@ -334,7 +273,7 @@ if [ "$CHECK_PLAN" -eq 1 ] && [ "$IS_REPO_MODE" -eq 0 ]; then
             PLAN_EXIT_CODE=$?
             if [ "$PLAN_EXIT_CODE" -eq 1 ]; then
                 echo -e "${YELLOW}⚠ PLAN.md validation failed or missing${NC}"
-                echo -e "${YELLOW}  Action: Create/update PLAN.md in .cursor/work/ before implementation${NC}"
+                echo -e "${YELLOW}  Action: Create/update PLAN.md in aidd/work/ before implementation${NC}"
                 WARNINGS=$((WARNINGS + 1))
             fi
         fi
@@ -344,9 +283,9 @@ if [ "$CHECK_PLAN" -eq 1 ] && [ "$IS_REPO_MODE" -eq 0 ]; then
     echo ""
 fi
 
-# 6. Optional: Validate REVIEW.md (if --review flag provided)
-if [ "$CHECK_REVIEW" -eq 1 ] && [ "$IS_REPO_MODE" -eq 0 ]; then
-    echo -e "${BLUE}[6/6] Validating REVIEW.md (optional)...${NC}"
+# Optional: Validate REVIEW.md (if --review flag provided)
+if [ "$CHECK_REVIEW" -eq 1 ]; then
+    echo -e "${BLUE}[+] Validating REVIEW.md (optional)...${NC}"
     REVIEW_CHECK_SCRIPT="$SCRIPT_DIR/review-check.sh"
     if [ -f "$REVIEW_CHECK_SCRIPT" ]; then
         if bash "$REVIEW_CHECK_SCRIPT" 2>/dev/null; then
@@ -355,7 +294,7 @@ if [ "$CHECK_REVIEW" -eq 1 ] && [ "$IS_REPO_MODE" -eq 0 ]; then
             REVIEW_EXIT_CODE=$?
             if [ "$REVIEW_EXIT_CODE" -eq 1 ]; then
                 echo -e "${YELLOW}⚠ REVIEW.md validation failed or missing${NC}"
-                echo -e "${YELLOW}  Action: Create/update REVIEW.md in .cursor/work/ with Verdict${NC}"
+                echo -e "${YELLOW}  Action: Create/update REVIEW.md in aidd/work/ with Verdict${NC}"
                 WARNINGS=$((WARNINGS + 1))
             fi
         fi
@@ -366,11 +305,7 @@ if [ "$CHECK_REVIEW" -eq 1 ] && [ "$IS_REPO_MODE" -eq 0 ]; then
 fi
 
 # Summary and next actions
-STEP_COUNT=5
-if [ "$CHECK_PLAN" -eq 1 ] || [ "$CHECK_REVIEW" -eq 1 ]; then
-    STEP_COUNT=6
-fi
-echo -e "${BLUE}[${STEP_COUNT}/${STEP_COUNT}] Summary${NC}"
+echo -e "${BLUE}=== Summary ===${NC}"
 echo ""
 
 if [ $ERRORS -eq 0 ] && [ $WARNINGS -eq 0 ]; then
@@ -380,7 +315,7 @@ if [ $ERRORS -eq 0 ] && [ $WARNINGS -eq 0 ]; then
     echo -e "${BLUE}Next actions:${NC}"
     echo "  1. Review code changes"
     echo "  2. Update documentation if needed"
-    echo "  3. Create PR following 5-open-source-pr.mdc"
+    echo "  3. Create PR following the open-source PR rule"
     exit 0
 elif [ $ERRORS -eq 0 ]; then
     echo -e "${YELLOW}✓ Checks passed with ${WARNINGS} warning(s)${NC}"
@@ -389,7 +324,7 @@ elif [ $ERRORS -eq 0 ]; then
     echo -e "${BLUE}Next actions:${NC}"
     echo "  1. Address warnings above"
     echo "  2. Review code changes"
-    echo "  3. Create PR following 5-open-source-pr.mdc"
+    echo "  3. Create PR following the open-source PR rule"
     exit 0
 else
     echo -e "${RED}✗ Checks failed: ${ERRORS} error(s), ${WARNINGS} warning(s)${NC}"

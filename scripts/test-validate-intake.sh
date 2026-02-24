@@ -34,19 +34,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VALIDATOR="$SCRIPT_DIR/validate-intake.sh"
 
 # Resolve test directory relative to script location
-# Case A: target project: <project>/.cursor/scripts/test-validate-intake.sh
-#         → work dir is <project>/.cursor/work (parent of scripts/, sibling of rules/)
-# Case B: repository root: scripts/test-validate-intake.sh
-#         → work dir is .cursor/work (sibling of scripts/)
-if [ "$(basename "$(dirname "$SCRIPT_DIR")")" = ".cursor" ]; then
-    # Case A: Running from target project
-    CURSOR_DIR="$(dirname "$SCRIPT_DIR")"
-    TEST_DIR="$CURSOR_DIR/work"
-else
-    # Case B: Running from repository root
-    REPO_ROOT="$(dirname "$SCRIPT_DIR")"
-    TEST_DIR="$REPO_ROOT/.cursor/work"
-fi
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+TEST_DIR="$REPO_ROOT/aidd/work"
 
 ORIGINAL_INTAKE="$TEST_DIR/INTAKE.md"
 
@@ -157,6 +146,12 @@ Test scope
 
 ## Risks
 Test risks
+
+## Evidence Requirements
+Test evidence
+
+## Acceptance Criteria
+Test acceptance
 
 ## Goal
 

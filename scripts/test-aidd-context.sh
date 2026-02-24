@@ -33,14 +33,14 @@ trap 'rm -rf "$TMPDIR"' EXIT
 # a repository structure.
 # It's purely a test fixture and does not represent the actual repository structure.
 mkdir -p "$TMPDIR/test_project/scripts"
-mkdir -p "$TMPDIR/test_project/.cursor/memory"
+mkdir -p "$TMPDIR/test_project/aidd/memory"
 
 # Copy script under test into temp workspace
 cp "$CONTEXT_SCRIPT" "$TMPDIR/test_project/scripts/aidd-context.sh"
 chmod +x "$TMPDIR/test_project/scripts/aidd-context.sh"
 
 # Create a memory file with recognizable test marker
-echo "TEST_MEMORY_BANK" > "$TMPDIR/test_project/.cursor/memory/projectbrief.md"
+echo "TEST_MEMORY_BANK" > "$TMPDIR/test_project/aidd/memory/projectbrief.md"
 
 # Output files in temp workspace
 DEFAULT_OUT="$TMPDIR/default.out"

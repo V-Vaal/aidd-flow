@@ -3,23 +3,15 @@
 # AIDD Verify UI: Lightweight smoke test for frontend
 # Runs headless browser tests and captures console/network errors
 # Optional: requires Playwright or Puppeteer
-# Designed to run from <project>/.cursor/scripts/ or scripts/ at repository root
+# Run from repository root: bash scripts/aidd-verify-ui.sh
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Detect if we're in a target project (.cursor/scripts/) or repository root (scripts/)
-if [ "$(basename "$(dirname "$SCRIPT_DIR")")" = ".cursor" ]; then
-    # Running from target project: <project>/.cursor/scripts/
-    CURSOR_DIR="$(dirname "$SCRIPT_DIR")"
-    PROJECT_ROOT="$(cd "$CURSOR_DIR/.." && pwd)"
-else
-    # Running from repository root: scripts/
-    REPO_ROOT="$(dirname "$SCRIPT_DIR")"
-    PROJECT_ROOT="$REPO_ROOT"
-    CURSOR_DIR="$REPO_ROOT/.cursor"
-fi
+# Resolve repository root and project root
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_ROOT="$REPO_ROOT"
 
 # Colors
 RED='\033[0;31m'

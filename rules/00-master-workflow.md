@@ -1,0 +1,28 @@
+# 00 master workflow
+
+Pre-Flight (Before Modifications):
+- If the repository is non-trivial and no AUDIT.md exists, recommend running the Audit phase before producing a PLAN
+- Verify PLAN.md validity by running validate-plan.sh before making any changes
+- Never proceed with implementation if PLAN.md validation fails
+- Ensure PLAN.md exists and is current for the task at hand
+
+Post-Flight (After Modifications):
+- Update aidd/memory/activeContext.md after any successful modification
+- Document what was completed in activeContext.md
+- Record current system state in activeContext.md
+- Note next steps or open questions in activeContext.md
+
+Acceptance (Code Review):
+- All generated code MUST be reviewed
+- REVIEW.md must exist and contain a Verdict field
+- Verdict must be either APPROVE or CHANGES_REQUESTED
+- No change is considered done without review approval
+- Do not mark tasks complete until REVIEW.md shows APPROVE
+
+Definition of Done:
+- A task is DONE only if ALL conditions below are met
+- For planned tasks (i.e. tasks defined via INTAKE/PLAN workflow): PLAN.md exists, validate-plan.sh executed, PLAN.md validation passed
+- Implementation work is completed
+- aidd/memory/activeContext.md updated with: what was completed, current system state, next steps or remaining questions
+- Review performed: REVIEW.md exists, contains Verdict field, Verdict value is APPROVE (not CHANGES_REQUESTED)
+- Relevant checks executed: aidd-check.sh at minimum, aidd-verify-ui.sh when change impacts UI

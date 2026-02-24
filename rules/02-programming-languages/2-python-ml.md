@@ -1,0 +1,94 @@
+# 2 python ml
+
+Reproducibility:
+- Set random seeds explicitly at start
+- Set Python random seed
+- Use numpy.random.seed for NumPy operations
+- If using PyTorch, use torch.manual_seed and torch.cuda.manual_seed_all
+- If using TensorFlow, use tf.random.set_seed
+- If using GPU, set deterministic mode (PyTorch: torch.use_deterministic_algorithms)
+- Note: GPU determinism has limits; some operations may remain non-deterministic
+- Document all seed values used
+- Never rely on default random states
+- Fix seeds for reproducibility in production
+
+Dataset Versioning:
+- Version all datasets explicitly
+- Use version tags or hashes for datasets
+- Document dataset sources and preprocessing
+- Track dataset splits consistently
+- Never modify datasets in place
+- Store dataset metadata with versions
+- Use checksums to verify dataset integrity
+
+Dataset Splits:
+- Define train/val/test splits explicitly
+- Use consistent split strategies
+- Never leak test data into training
+- Document split ratios and methods
+- Store split indices or use deterministic splits
+- Validate split distributions
+- Never shuffle after splitting
+
+Experiment Tracking:
+- Log all hyperparameters for each experiment
+- Track model versions and configurations
+- Record training metrics over time
+- Log validation metrics separately
+- Track experiment metadata (git commit, timestamp)
+- Use experiment names that are descriptive
+- Never skip experiment logging
+
+Evaluation Discipline:
+- Use appropriate metrics for the task
+- Evaluate on held-out test set only once
+- Never tune hyperparameters on test set
+- Report both train and validation metrics
+- Document evaluation methodology
+- Avoid data leakage in evaluation
+- Use cross-validation when appropriate
+
+Metrics and Leakage Avoidance:
+- Never use future data to predict past
+- Validate temporal splits for time series
+- Avoid target leakage in features
+- Check for data leakage in preprocessing
+- Use separate validation sets for tuning
+- Report confidence intervals when possible
+- Document all assumptions about data
+
+Packaging and Structure:
+- Organize code into modules clearly
+- Separate data, model, and training code
+- Use requirements.txt or pyproject.toml
+- Pin dependency versions explicitly
+- Document installation instructions
+- Use virtual environments consistently
+- Structure projects for reproducibility
+
+Typing and Linting:
+- Use type hints for function signatures
+- Type model inputs and outputs explicitly
+- Use mypy for type checking
+- Follow PEP 8 style guidelines
+- Use black or similar formatter
+- Run linters before committing
+- Type check critical data pipelines
+
+Safe Secrets and Data Handling:
+- Never commit secrets or API keys
+- Use environment variables for credentials
+- Encrypt sensitive datasets at rest
+- Handle PII data according to regulations
+- Never log sensitive data
+- Use secure storage for model artifacts
+- Validate data inputs before processing
+
+Notebook Hygiene:
+- Keep notebooks focused and small
+- Clear outputs before committing
+- Use markdown cells for documentation
+- Extract reusable code to modules
+- Avoid huge diffs in notebook files
+- Use version control for notebooks
+- Document notebook purpose clearly

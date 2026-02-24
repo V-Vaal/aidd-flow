@@ -2,8 +2,7 @@
 
 # AIDD Architect Packet: Generate concise validation packet for architect review
 # Compiles key excerpts from TARGET.md, github-signals.md, AUDIT.md, INTAKE.md, PLAN.md
-# Works from: <project>/.cursor/scripts/ or scripts/ at repository root
-# Resolves work directory relative to script location only (no pwd guessing)
+# Run from repository root: bash scripts/aidd-architect-packet.sh
 #
 # Usage:
 #   aidd-architect-packet.sh
@@ -14,19 +13,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Resolve work directory relative to script location
-# Case A: target project: <project>/.cursor/scripts/aidd-architect-packet.sh
-#         → work dir is <project>/.cursor/work (parent of scripts/, sibling of rules/)
-# Case B: repository root: scripts/aidd-architect-packet.sh
-#         → work dir is .cursor/work (sibling of scripts/)
-if [ "$(basename "$(dirname "$SCRIPT_DIR")")" = ".cursor" ]; then
-    # Case A: Running from target project
-    CURSOR_DIR="$(dirname "$SCRIPT_DIR")"
-    WORK_DIR="$CURSOR_DIR/work"
-else
-    # Case B: Running from repository root
-    REPO_ROOT="$(dirname "$SCRIPT_DIR")"
-    WORK_DIR="$REPO_ROOT/.cursor/work"
-fi
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+WORK_DIR="$REPO_ROOT/aidd/work"
 
 OUTPUT_FILE="$WORK_DIR/ARCHITECT_PACKET.md"
 
@@ -85,7 +73,7 @@ extract_file() {
     if [ -f "$TARGET_FILE" ]; then
         echo "## Target"
         echo ""
-        echo "**Source:** \`.cursor/work/TARGET.md\`"
+        echo "**Source:** \`aidd/work/TARGET.md\`"
         echo ""
         extract_file "$TARGET_FILE"
         echo ""
@@ -105,7 +93,7 @@ extract_file() {
     if [ -f "$GITHUB_SIGNALS_FILE" ]; then
         echo "## GitHub Signals"
         echo ""
-        echo "**Source:** \`.cursor/work/github-signals.md\`"
+        echo "**Source:** \`aidd/work/github-signals.md\`"
         echo ""
         # Extract header, query params, and results summary only (facts-only)
         awk '
@@ -124,7 +112,7 @@ extract_file() {
             !done && !in_query && !in_summary && /^## / { exit }
         ' "$GITHUB_SIGNALS_FILE" 2>/dev/null || head -40 "$GITHUB_SIGNALS_FILE"
         echo ""
-        echo "*[Full content: \`.cursor/work/github-signals.md\`]*"
+        echo "*[Full content: \`aidd/work/github-signals.md\`]*"
         echo ""
         echo "---"
         echo ""
@@ -142,7 +130,7 @@ extract_file() {
     if [ -f "$AUDIT_FILE" ]; then
         echo "## Audit (Key Sections)"
         echo ""
-        echo "**Source:** \`.cursor/work/AUDIT.md\`"
+        echo "**Source:** \`aidd/work/AUDIT.md\`"
         echo ""
         
         # Extract Repo Overview
@@ -166,7 +154,7 @@ extract_file() {
             echo ""
         fi
         
-        echo "*[Full content: \`.cursor/work/AUDIT.md\`]*"
+        echo "*[Full content: \`aidd/work/AUDIT.md\`]*"
         echo ""
         echo "---"
         echo ""
@@ -184,7 +172,7 @@ extract_file() {
     if [ -f "$INTAKE_FILE" ]; then
         echo "## Intake (Scope & Evidence)"
         echo ""
-        echo "**Source:** \`.cursor/work/INTAKE.md\`"
+        echo "**Source:** \`aidd/work/INTAKE.md\`"
         echo ""
         
         # Extract Goal
@@ -208,7 +196,7 @@ extract_file() {
             echo ""
         fi
         
-        echo "*[Full content: \`.cursor/work/INTAKE.md\`]*"
+        echo "*[Full content: \`aidd/work/INTAKE.md\`]*"
         echo ""
         echo "---"
         echo ""
@@ -226,7 +214,7 @@ extract_file() {
     if [ -f "$PLAN_FILE" ]; then
         echo "## Plan (High-Level)"
         echo ""
-        echo "**Source:** \`.cursor/work/PLAN.md\`"
+        echo "**Source:** \`aidd/work/PLAN.md\`"
         echo ""
         
         # Extract Goal
@@ -257,7 +245,7 @@ extract_file() {
             echo ""
         fi
         
-        echo "*[Full content: \`.cursor/work/PLAN.md\`]*"
+        echo "*[Full content: \`aidd/work/PLAN.md\`]*"
         echo ""
         echo "---"
         echo ""
@@ -280,7 +268,7 @@ extract_file() {
     echo "- Check open questions from AUDIT"
     echo "- Approve or request changes"
     echo ""
-    echo "*This packet is generated automatically. For full details, refer to source files in \`.cursor/work/\`*"
+    echo "*This packet is generated automatically. For full details, refer to source files in \`aidd/work/\`*"
 
 } > "$OUTPUT_FILE"
 

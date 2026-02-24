@@ -2,8 +2,7 @@
 
 # Validate INTAKE.md structure
 # Ensures INTAKE.md exists and contains all required sections
-# Works from: <project>/.cursor/scripts/ or scripts/ at repository root
-# Resolves work directory relative to script location only (no pwd guessing)
+# Run from repository root: bash scripts/validate-intake.sh
 
 set -euo pipefail
 
@@ -11,19 +10,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Resolve work directory relative to script location
-# Case A: target project: <project>/.cursor/scripts/validate-intake.sh
-#         → work dir is <project>/.cursor/work (parent of scripts/, sibling of rules/)
-# Case B: repository root: scripts/validate-intake.sh
-#         → work dir is .cursor/work (sibling of scripts/)
-if [ "$(basename "$(dirname "$SCRIPT_DIR")")" = ".cursor" ]; then
-    # Case A: Running from target project
-    CURSOR_DIR="$(dirname "$SCRIPT_DIR")"
-    WORK_DIR="$CURSOR_DIR/work"
-else
-    # Case B: Running from repository root
-    REPO_ROOT="$(dirname "$SCRIPT_DIR")"
-    WORK_DIR="$REPO_ROOT/.cursor/work"
-fi
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+WORK_DIR="$REPO_ROOT/aidd/work"
 
 INTAKE_FILE="$WORK_DIR/INTAKE.md"
 
@@ -40,7 +28,7 @@ echo "Validating INTAKE.md..."
 if [ ! -f "$INTAKE_FILE" ]; then
     echo -e "${RED}Error: INTAKE.md not found${NC}"
     echo -e "${RED}  Expected: ${INTAKE_FILE}${NC}"
-    echo -e "${RED}  Action: Create INTAKE.md in .cursor/work/ before proceeding${NC}"
+    echo -e "${RED}  Action: Create INTAKE.md in aidd/work/ before proceeding${NC}"
     exit 1
 fi
 
@@ -68,7 +56,6 @@ HEADINGS=$(grep -E '^##+ ' "$INTAKE_FILE" | sed 's/^##* //' || echo "")
 REQUIRED_SECTIONS=(
     "Goal"
     "Scope"
-    "Definition of Done|Definition of done"
     "Risks"
     "Evidence Requirements|Evidence requirements"
 )
@@ -99,6 +86,16 @@ check_section() {
 for section_pattern in "${REQUIRED_SECTIONS[@]}"; do
     check_section "$section_pattern"
 done
+
+# Require one of: Definition of Done OR Acceptance Criteria
+HAS_DOD=$(echo "$HEADINGS" | grep -qiE "^Definition of Done$|^Definition of done$" && echo "yes" || echo "no")
+HAS_AC=$(echo "$HEADINGS" | grep -qiE "^Acceptance Criteria$|^Acceptance criteria$" && echo "yes" || echo "no")
+
+if [ "$HAS_DOD" = "no" ] && [ "$HAS_AC" = "no" ]; then
+    echo -e "${RED}Error: Missing required section: Definition of Done or Acceptance Criteria${NC}"
+    echo -e "${RED}  Action: Add either '## Definition of Done' or '## Acceptance Criteria' to INTAKE.md${NC}"
+    ERRORS=$((ERRORS + 1))
+fi
 
 # Check for non-empty sections (must have content beyond template placeholders)
 check_section_content() {
@@ -166,8 +163,10 @@ if echo "$HEADINGS" | grep -qiE "^Scope$"; then
     check_section_content "Scope"
 fi
 
-if echo "$HEADINGS" | grep -qiE "^Definition of Done$|^Definition of done$"; then
+if [ "$HAS_DOD" = "yes" ]; then
     check_section_content "Definition of Done"
+elif [ "$HAS_AC" = "yes" ]; then
+    check_section_content "Acceptance Criteria"
 fi
 
 # Summary

@@ -1,0 +1,9 @@
+# 7 testing backend
+
+Setup and Teardown:
+- Use setup hooks (`beforeEach`, `beforeAll`).
+- Use teardown hooks (`afterEach`, `afterAll`).
+
+Code Quality:
+- Avoid code repetition in tests.
+- Keep tests independent and focused.

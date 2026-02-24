@@ -2,7 +2,7 @@
 
 # aidd-flow
 
-Implémentation d'un workflow AI-Driven Development (AIDD) optimisée pour Cursor et axée sur l'orchestration, les points de contrôle et l'auditabilité.
+Une implémentation industrielle et agnostique aux IDE d'un workflow AI-Driven Development (AIDD), axée sur l'orchestration, les points de contrôle et l'auditabilité. Compatible avec OpenCode, Claude Code, Cursor, GitHub Copilot, ou tout agent LLM.
 
 ---
 
@@ -21,18 +21,23 @@ L'AIDD privilégie la méthode à l'automatisation : règles claires, plans expl
 
 ## Qu'est-ce que aidd-flow ?
 
-`aidd-flow` est une implémentation pratique, optimisée pour Cursor, d'un workflow AIDD. Ce dépôt fournit :
+`aidd-flow` est une implémentation pratique et agnostique aux IDE d'un workflow AIDD, construite sur un **pattern tripartite de rôles** :
 
-- **Orchestration** : Commandes et prompts structurés qui guident le workflow
-- **Points de contrôle** : Portes de validation qui imposent la qualité des plans et les verdicts de revue
-- **Auditabilité** : Artefacts persistants (AUDIT, INTAKE, PLAN, REVIEW) qui documentent les décisions et la justification
-- **Intégration Cursor** : Commandes et règles optimisées pour le mode agent de Cursor IDE
+- **Architecte** — réfléchit et planifie avant d'écrire le moindre code
+- **Éditeur** — exécute sous les contraintes définies par le plan et les règles
+- **Reviewer** — effectue un audit humain obligatoire avant de marquer le travail comme terminé
 
-Ce workflow se concentre sur **comment structurer le travail assisté par IA** plutôt que sur la génération de code seule. Il fournit un processus répétable pour passer des exigences à une implémentation revue, avec une séparation claire entre exploration, planification, exécution et publication.
+Ce dépôt fournit :
+
+- **Orchestration** : Un seul point d'entrée `AGENTS.md` chargé automatiquement par n'importe quel agent
+- **Points de contrôle** : Scripts de validation imposant la qualité des plans et les verdicts de revue
+- **Auditabilité** : Artefacts persistants (AUDIT, INTAKE, PLAN, REVIEW) documentant les décisions
+- **Bibliothèque de règles** : 30+ règles Markdown couvrant code propre, sécurité, langages, frameworks, QA
+- **Banque de mémoire** : Fichiers de contexte persistants (`projectbrief`, `techContext`, `systemPatterns`, `activeContext`)
 
 ---
 
-## Portée de ce workflow
+## Portée
 
 ### Ce que ce dépôt aide à faire
 
@@ -40,154 +45,113 @@ Ce workflow se concentre sur **comment structurer le travail assisté par IA** p
 - **Traçabilité des décisions** : Artefacts clairs documentant ce qui a été décidé et pourquoi
 - **Portes de qualité** : Validation automatisée des plans et revue humaine obligatoire
 - **Continuité du projet** : Banque de mémoire et contexte actif pour le travail multi-sessions
-- **Workflows optimisés pour Cursor** : Commandes et prompts optimisés pour Cursor IDE
+- **Workflows agnostiques aux IDE** : Compatible OpenCode, Claude Code, Cursor, Copilot et autres
 
 ### Ce que ce dépôt ne tente pas de résoudre
 
 - **Méthodologie universelle** : C'est un workflow pratique, pas un cadre théorique
-- **Workflows agnostiques aux outils** : Optimisé pour Cursor, pas conçu pour d'autres IDE dans cette version (évolution future possible)
-- **Collaboration d'équipe** : Conçu pour un usage individuel ou en petite équipe, pas pour des processus à l'échelle entreprise
+- **Collaboration d'équipe** : Conçu pour un usage individuel ou en petite équipe
 - **Certification ou formation** : Pas de programme de certification ou de formation officiel
 
 ---
 
 ## Installation
 
-### Option 1 : Utiliser ce dépôt directement
-
-Si vous voulez utiliser `aidd-flow` comme template ou référence :
+### Option 1 : Cloner et utiliser directement
 
 ```bash
 git clone https://github.com/V-Vaal/aidd-flow.git
 cd aidd-flow
 ```
 
-Ensuite, ouvrez le dépôt dans Cursor et utilisez `@aidd.start` directement.
+Remplissez les fichiers `aidd/memory/` avec le contexte de votre projet, puis démarrez le workflow via `AGENTS.md`.
 
-### Option 2 : Exporter le workflow vers un projet existant
-
-Si vous voulez appliquer ce workflow à un projet existant :
+### Option 2 : Exporter vers un projet existant
 
 ```bash
-# Cloner ce dépôt
 git clone https://github.com/V-Vaal/aidd-flow.git
 cd aidd-flow
 
-# Exporter le workflow vers votre projet cible
 bash scripts/aidd-export.sh /chemin/vers/votre/projet-cible
 ```
 
-Le script d'export copie tous les fichiers du workflow (commandes, prompts, règles, scripts) dans le répertoire `.cursor/` de votre projet cible. Après l'export, ouvrez votre projet cible dans Cursor et utilisez `@aidd.start`.
+Cela exporte le workflow complet dans `/chemin/vers/votre/projet-cible/.aidd-flow/`, crée un `AGENTS.md` à la racine (redirection), et écrit `.aidd-flow/aidd/aidd.lock` pour le suivi de version.
 
-**Note** : Le script d'export crée un fichier `.cursor/aidd.lock` pour suivre la version du workflow installée dans votre projet.
+Comportement de sécurité :
+- Si `.aidd-flow/` existe et n'est pas vide, le script refuse sauf si vous passez `--force` ou `--backup`.
+- Si `AGENTS.md` existe déjà à la racine, le script refuse sauf si vous passez `--force-agents` ou `--backup-agents`.
+
+Après l'export, configurez le serveur MCP GitHub pour votre IDE — voir `mcp.example.json` et `docs/design/architecture.md`.
 
 ---
 
 ## Démarrage rapide
 
-Le point d'entrée est la commande `@aidd.start` dans Cursor.
+`AGENTS.md` est le point d'entrée universel. Il est chargé automatiquement par OpenCode et Claude Code. Le dossier `prompts/commands/cursor/` est une archive historique pouvant servir d'inspiration pour recréer des commandes slash Cursor.
 
 ### Prérequis
 
-- Cursor IDE avec mode agent
-- Dépôt Git (local ou distant) avec le workflow installé (voir [Installation](#installation))
-- (Optionnel) GitHub MCP pour le mode ciblé
+- N'importe quel agent IA (OpenCode, Claude Code, Cursor mode agent, GitHub Copilot Chat, ...)
+- Dépôt Git avec le workflow installé (voir [Installation](#installation))
+- (Optionnel) Serveur MCP GitHub pour le mode ciblé — voir `mcp.example.json`
 
-### Démarrer le workflow
+### Le workflow en trois phases
 
-1. **Ouvrez Cursor** dans votre répertoire de projet
+**Phase 1 — Architecte** (planifier avant de construire)
 
-2. **Exécutez la commande start** :
-   ```
-   @aidd.start
-   ```
+1. Lire `aidd/memory/activeContext.md` et `aidd/memory/projectbrief.md`
+2. Charger `prompts/intake.md` → produit `aidd/work/INTAKE.md`
+3. Charger `prompts/plan.md` → produit `aidd/work/PLAN.md`
+4. Lancer la porte : `bash scripts/validate-plan.sh` — ne pas continuer si elle échoue
 
-3. **Sélectionnez un mode** :
-   - **Ciblé (Issue/PR)** : Récupérer les signaux GitHub pour une issue ou PR spécifique, puis exécuter le workflow complet
-   - **Exploratoire (Scan de dépôt)** : Exécuter un audit de dépôt pour produire des résultats
+**Phase 2 — Éditeur** (construire sous contraintes)
 
-4. **Suivez le flux interactif** : La commande vous guide à travers les étapes spécifiques au mode
+5. Charger les règles pertinentes depuis `rules/` (voir `rules/INDEX.md` pour les règles always-apply)
+6. Implémenter en suivant `aidd/work/PLAN.md` exactement
+7. Lancer : `bash scripts/aidd-check.sh`
 
-5. **Revoyez les artefacts** : Les artefacts générés apparaissent dans `.cursor/work/` :
-   - `AUDIT.md` : Analyse du dépôt et résultats
-   - `INTAKE.md` : Exigences et contraintes (mode ciblé)
-   - `PLAN.md` : Plan d'implémentation technique (mode ciblé)
-   - `REVIEW.md` : Verdict de revue et preuves (après implémentation)
+**Phase 3 — Reviewer** (audit humain obligatoire)
 
-### Prochaines étapes après le démarrage
+8. Charger `prompts/review.md` → produit `aidd/work/REVIEW.md`
+9. Lancer la porte : `bash scripts/review-check.sh` — tâche non terminée tant que le Verdict n'est pas `APPROVE`
 
-- **Mode ciblé** : Revoyez AUDIT → INTAKE → PLAN, puis procédez à l'implémentation
-- **Mode exploratoire** : Revoyez les résultats, sélectionnez un résultat à convertir en exécution ciblée
+### Points d'entrée par IDE
 
-Pour les étapes détaillées du workflow, voir la [documentation du workflow](docs/workflow.md).
+| Agent | Point d'entrée |
+|-------|----------------|
+| OpenCode / Claude Code | `AGENTS.md` chargé automatiquement au démarrage de session |
+| Cursor | Archive historique dans `prompts/commands/cursor/` (non plug-and-play) |
+| Autres agents | Copier le contenu du `prompts/*.md` pertinent dans votre contexte de chat |
 
 ---
 
 ## Principes de conception fondamentaux
 
-Si vous voulez un meilleur code, améliorez le système, pas le modèle.
+> Si vous voulez un meilleur code, améliorez le système, pas le modèle.
 
-Ce workflow ne cherche pas à "rendre l’IA plus intelligente".
-Il améliore les conditions de production du code :
-contraintes claires, plans explicites, portes de validation et revue humaine.
+Ce workflow ne cherche pas à "rendre l'IA plus intelligente". Il améliore les conditions dans lesquelles le code est produit : contraintes claires, plans explicites, portes de validation et revue humaine.
 
 ### Points de décision humains dans la boucle
 
 Les décisions critiques nécessitent le jugement humain :
 - **Validation de l'intake** : L'humain révise et approuve les exigences
 - **Approbation du plan** : L'humain valide l'approche technique avant l'implémentation
-- **Verdict de revue** : L'humain fournit une approbation formelle (APPROVE | CHANGES_REQUESTED)
+- **Verdict de revue** : L'humain fournit une approbation formelle (`APPROVE` | `CHANGES_REQUESTED`)
 
-### Séparation claire entre exploration, exécution et publication
-
-- **Exploration** : Audit et découverte (mode exploratoire)
-- **Planification** : Exigences et conception technique (mode ciblé)
-- **Exécution** : Implémentation avec assistance IA
-- **Vérification** : Vérifications automatisées et revue humaine
-- **Publication** : Changements approuvés uniquement
-
-### Auditabilité et traçabilité
-
-Tout travail assisté par IA produit des artefacts structurés :
-- **AUDIT.md** : État du dépôt et résultats
-- **INTAKE.md** : Exigences, contraintes, critères d'acceptation
-- **PLAN.md** : Étapes techniques, fichiers à modifier, plan de rollback
-- **REVIEW.md** : Résumé de revue, preuves de test, verdict formel
-
-Ces artefacts documentent **ce qui a été décidé**, **pourquoi cela a été décidé**, et **quelle preuve soutient la décision**.
-
-### Séparation explicite des rôles
+### Séparation claire des rôles
 
 - **Humain comme orchestrateur** : Définit les règles, valide les plans, prend les décisions, fournit les verdicts
 - **IA comme exécuteur** : Implémente les plans sous contraintes, suit les règles, génère les artefacts
 
----
+### Auditabilité et traçabilité
 
-## Inspiration et lignée
+Tout travail assisté par IA produit des artefacts structurés dans `aidd/work/` :
+- `AUDIT.md` : État du dépôt et résultats
+- `INTAKE.md` : Exigences, contraintes, critères d'acceptation
+- `PLAN.md` : Étapes techniques, fichiers à modifier, plan de rollback
+- `REVIEW.md` : Résumé de revue, preuves de test, verdict formel
 
-Ce workflow est inspiré de l'approche **AI-Driven Development (AIDD)** articulée par Alex Soyes et la communauté `ai-driven-dev`.
-
-**Avertissements importants :**
-
-- Ceci n'est **pas une implémentation officielle** ou littérale de l'AIDD
-- C'est une **interprétation personnelle et pratique** optimisée pour Cursor IDE
-- Toutes opinions, limitations ou erreurs dans cette implémentation sont celles de l'auteur
-- Ce dépôt représente un **instantané stable** extrait d'un sandbox interne
-
-L'approche AIDD originale privilégie le leadership humain, les contraintes explicites et les workflows structurés. Ce dépôt adapte ces principes en un workflow optimisé pour Cursor, piloté par commandes, avec des portes de validation et l'auditabilité.
-
----
-
-## Non-objectifs
-
-Ce dépôt n'est **pas** :
-
-- **Un cadre AIDD officiel** : C'est une implémentation personnelle, pas un standard officiel
-- **Un programme de certification** : Pas de certification, formation ou approbation officielle
-- **Une méthodologie universelle** : Conçu pour un usage pratique, pas pour une complétude théorique
-- **Une approbation d'outils** : La conception optimisée pour Cursor reflète des choix pratiques, pas une approbation d'outil
-- **Un produit marketing** : Documentation factuelle, pas de langage promotionnel
-- **Une spécification statique** : Ce workflow évolue en fonction de l'usage réel
+Ces artefacts documentent **ce qui a été décidé**, **pourquoi cela a été décidé**, et **quelle preuve soutient la décision**.
 
 ---
 
@@ -195,32 +159,49 @@ Ce dépôt n'est **pas** :
 
 ```
 aidd-flow/
-├── .cursor/
-│   ├── commands/          # Commandes Cursor (aidd.start, aidd.intake, etc.)
-│   ├── prompts/          # Prompts du workflow (start, intake, plan, review)
-│   ├── rules/            # Règles Cursor (architecture, conventions, sécurité)
-│   ├── memory/            # Fichiers template de la banque de mémoire
-│   ├── review/            # Listes de contrôle de revue spécifiques au domaine
-│   └── work/              # Artefacts générés (AUDIT, INTAKE, PLAN, REVIEW)
-├── scripts/              # Portes de validation et scripts utilitaires
-│   └── aidd-export.sh     # Exporter le workflow vers un projet cible (voir Installation)
-├── docs/                 # Documentation du workflow
-└── README.md
+├── AGENTS.md                  # Point d'entrée universel (3 modes + gates + RTK)
+├── mcp.example.json           # Template serveur MCP GitHub
+├── .env.example               # Variables d'environnement requises
+│
+├── aidd/
+│   ├── memory/                # Contexte persistant — remplir une fois par projet
+│   ├── work/                  # Artefacts runtime — gitignorés (AUDIT, INTAKE, PLAN, REVIEW)
+│   └── review/                # Listes de contrôle de revue par domaine (web3, ml)
+│
+├── rules/                     # 30+ règles Markdown
+│   └── INDEX.md               # Catalogue des règles (always-apply, par stack, deprecated)
+│
+├── prompts/                   # Prompts du workflow (start, intake, plan, audit, review, ...)
+│   └── commands/cursor/       # Commandes slash Cursor (référence archivée)
+│
+├── scripts/                   # Scripts de portes de validation
+│   ├── validate-plan.sh       # Porte : bloque l'implémentation si PLAN.md est invalide
+│   ├── review-check.sh        # Porte : bloque la complétion si REVIEW.md n'est pas APPROVE
+│   ├── aidd-check.sh          # Vérifications post-implémentation
+│   ├── aidd-export.sh         # Exporte le framework vers un projet cible
+│   └── aidd-cleanup.sh        # Archive les artefacts aidd/work/ de plus de 30 jours
+│
+└── docs/
+    ├── workflow.md             # Référence complète du workflow
+    ├── design/architecture.md  # Configuration MCP, guide d'export, ADRs du framework
+    └── quality/               # Spécifications des artefacts (intake, technical-plan)
 ```
 
 ---
 
 ## Documentation
 
-- [Guide du workflow](docs/workflow.md) : Méthode complète du workflow avec portes, dépannage et vérifications
-- [Spécification INTAKE](docs/intake.md) : Structure et exigences de l'artefact INTAKE.md
-- [Spécification PLAN](docs/technical-plan.md) : Structure et exigences de l'artefact PLAN.md
+- [Guide du workflow](docs/workflow/README.md) : Méthode complète du workflow avec gates, gouvernance et dépannage
+- [Guide d'architecture](docs/design/architecture.md) : Configuration MCP par IDE, guide d'export, décisions de conception
+- [Spécification INTAKE](docs/quality/intake.md) : Structure et exigences de l'artefact INTAKE.md
+- [Spécification PLAN](docs/quality/technical-plan.md) : Structure et exigences de l'artefact PLAN.md
+- [Index des règles](rules/INDEX.md) : Toutes les règles avec les flags always-apply et deprecated
 
 ---
 
 ## Suivi de version du workflow
 
-Lorsque vous exportez ce workflow vers un projet cible en utilisant `scripts/aidd-export.sh`, il crée `.cursor/aidd.lock` dans le projet cible :
+Lorsque vous exportez ce workflow vers un projet cible en utilisant `scripts/aidd-export.sh`, il crée `aidd/aidd.lock` dans le projet cible :
 
 ```yaml
 # AIDD Lock File
@@ -230,20 +211,31 @@ source_commit: abc123def456...
 template_version: 1.0.0
 ```
 
-**Objectif :**
-- Suit quelle version du workflow est installée dans le projet cible
-- Enregistre le dépôt source et le SHA de commit
-- Permet les mises à jour conscientes de la version et le dépannage
+Ré-exécutez `aidd-export.sh` depuis le dépôt source pour mettre à jour. Utilisez `--backup` pour préserver le répertoire `aidd/` existant.
 
-**Mise à jour du workflow dans le projet cible :**
-- Ré-exécutez `aidd-export.sh` depuis le dépôt source
-- Le fichier lock est mis à jour avec les nouvelles informations de version
-- Utilisez le flag `--backup` pour préserver le répertoire `.cursor/` existant
+---
 
-**Informations de version :**
-- `source_commit` : SHA Git quand disponible, ou "uncommitted" si aucun commit valide
-- `source_remote` : URL du dépôt si le remote est configuré, sinon omis
-- `template_version` : Identifiant de version (si suivi dans le dépôt source)
+## Inspiration et lignée
+
+Ce workflow est inspiré de l'approche **AI-Driven Development (AIDD)** articulée par Alex Soyes et la communauté `ai-driven-dev` ([github.com/ai-driven-dev](https://github.com/ai-driven-dev)).
+
+**Avertissements importants :**
+
+- Ceci n'est **pas une implémentation officielle** ou littérale de l'AIDD
+- C'est une **interprétation personnelle et pratique** adaptée pour un usage agnostique aux IDE
+- Toutes opinions, limitations ou erreurs dans cette implémentation sont celles de l'auteur
+
+---
+
+## Non-objectifs
+
+Ce dépôt n'est **pas** :
+
+- **Un cadre AIDD officiel** : Implémentation personnelle, pas un standard officiel
+- **Un programme de certification** : Pas de certification, formation ou approbation officielle
+- **Une méthodologie universelle** : Conçu pour un usage pratique, pas pour une complétude théorique
+- **Une approbation d'outils** : La conception agnostique reflète des choix pratiques, pas une approbation d'outil
+- **Une spécification statique** : Ce workflow évolue en fonction de l'usage réel
 
 ---
 

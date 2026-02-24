@@ -2,7 +2,7 @@
 
 # AIDD Context: Generate compact context bundle for LLMs
 # Prints: repo tree (depth 3), git status, last 10 commits, key config files
-# Designed to run from <project>/.cursor/scripts/ or scripts/ at repository root
+# Run from repository root: bash scripts/aidd-context.sh
 #
 # Usage:
 #   aidd-context.sh [--verbose]
@@ -27,17 +27,12 @@ for arg in "$@"; do
     esac
 done
 
-# Detect if we're in a target project (.cursor/scripts/) or repository root (scripts/)
-if [ "$(basename "$(dirname "$SCRIPT_DIR")")" = ".cursor" ]; then
-    # Running from target project: <project>/.cursor/scripts/
-    CURSOR_DIR="$(dirname "$SCRIPT_DIR")"
-    PROJECT_ROOT="$(cd "$CURSOR_DIR/.." && pwd)"
-else
-    # Running from repository root: scripts/
-    REPO_ROOT="$(dirname "$SCRIPT_DIR")"
-    PROJECT_ROOT="$REPO_ROOT"
-    CURSOR_DIR="$REPO_ROOT/.cursor"
-fi
+# Resolve repository root and key directories
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_ROOT="$REPO_ROOT"
+MEMORY_DIR="$REPO_ROOT/aidd/memory"
+WORK_DIR="$REPO_ROOT/aidd/work"
+RULES_DIR="$REPO_ROOT/rules"
 
 # Verify PROJECT_ROOT exists before changing directory
 if [ ! -d "$PROJECT_ROOT" ]; then
@@ -184,15 +179,10 @@ fi
 
 echo ""
 
-# 5. AIDD template info
-if [ -d ".cursor/rules" ]; then
+# 5. AIDD Rules Available
+if [ -d "$RULES_DIR" ]; then
     echo "=== AIDD Rules Available ==="
-    RULES_COUNT=$(find ".cursor/rules" -name "*.mdc" -type f 2>/dev/null | wc -l | tr -d ' ' || echo "0")
-    echo "Total rules: $RULES_COUNT"
-    echo ""
-elif [ -d "$CURSOR_DIR/rules" ]; then
-    echo "=== AIDD Rules Available ==="
-    RULES_COUNT=$(find "$CURSOR_DIR/rules" -name "*.mdc" -type f 2>/dev/null | wc -l | tr -d ' ' || echo "0")
+    RULES_COUNT=$(find "$RULES_DIR" -name "*.md" -type f 2>/dev/null | wc -l | tr -d ' ' || echo "0")
     echo "Total rules: $RULES_COUNT"
     echo ""
 fi
@@ -201,14 +191,7 @@ fi
 # Context-size design: Memory Bank files are core project knowledge
 # In concise mode: show informational line if present
 # In verbose mode: include full contents for detailed context
-MEMORY_DIR=""
-if [ -d ".cursor/memory" ]; then
-    MEMORY_DIR=".cursor/memory"
-elif [ -d "$CURSOR_DIR/memory" ]; then
-    MEMORY_DIR="$CURSOR_DIR/memory"
-fi
-
-if [ -n "$MEMORY_DIR" ]; then
+if [ -d "$MEMORY_DIR" ]; then
     if [ "$VERBOSE" -eq 1 ]; then
         # Verbose mode: full dump
         echo "=== Memory Bank ==="
@@ -260,14 +243,7 @@ fi
 # 7. Work/Review Artefacts (bounded inclusion)
 # Context-size design: Only include current work artefacts, not historical/accumulated files
 # This keeps context focused on active work while preventing unbounded growth
-WORK_DIR=""
-if [ -d ".cursor/work" ]; then
-    WORK_DIR=".cursor/work"
-elif [ -d "$CURSOR_DIR/work" ]; then
-    WORK_DIR="$CURSOR_DIR/work"
-fi
-
-if [ -n "$WORK_DIR" ]; then
+if [ -d "$WORK_DIR" ]; then
     if [ "$VERBOSE" -eq 1 ]; then
     echo "=== Work Artefacts (Current) ==="
     
@@ -312,14 +288,9 @@ fi
 # 8. Review Checklists (domain-specific)
 # Context-size design: Include review checklists as reference, but limit to current domain
 # This provides relevant security/quality guidance without overwhelming context
-REVIEW_DIR=""
-if [ -d ".cursor/review" ]; then
-    REVIEW_DIR=".cursor/review"
-elif [ -d "$CURSOR_DIR/review" ]; then
-    REVIEW_DIR="$CURSOR_DIR/review"
-fi
+REVIEW_DIR="$REPO_ROOT/aidd/review"
 
-if [ -n "$REVIEW_DIR" ]; then
+if [ -d "$REVIEW_DIR" ]; then
     # Only include if there are checklist files (avoid empty section)
     CHECKLIST_COUNT=$(find "$REVIEW_DIR" -name "review-checklist-*.md" -type f 2>/dev/null | wc -l | tr -d ' ' || echo "0")
     if [ "$CHECKLIST_COUNT" -gt 0 ]; then
