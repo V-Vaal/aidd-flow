@@ -2,7 +2,7 @@
 
 # aidd-flow
 
-Une implémentation industrielle et agnostique aux IDE d'un workflow AI-Driven Development (AIDD), axée sur l'orchestration, les points de contrôle et l'auditabilité. Compatible avec OpenCode, Claude Code, Cursor, GitHub Copilot, ou tout agent LLM.
+Une implémentation structurée et agnostique aux IDE d'un workflow AI-Driven Development (AIDD), axée sur l'orchestration, les points de contrôle et l'auditabilité. Compatible avec OpenCode, Claude Code, Cursor, GitHub Copilot, ou tout agent LLM.
 
 ---
 
@@ -75,25 +75,23 @@ cd aidd-flow
 bash scripts/aidd-export.sh /chemin/vers/votre/projet-cible
 ```
 
-Cela exporte le workflow complet dans `/chemin/vers/votre/projet-cible/.aidd-flow/`, crée un `AGENTS.md` à la racine (redirection), et écrit `.aidd-flow/aidd/aidd.lock` pour le suivi de version.
+Cela installe le moteur du workflow dans `/.aidd-flow/`, crée un `AGENTS.md` à la racine du projet cible (depuis template), et écrit `.aidd-flow/aidd/aidd.lock` pour le suivi de version.
 
-Comportement de sécurité :
-- Si `.aidd-flow/` existe et n'est pas vide, le script refuse sauf si vous passez `--force` ou `--backup`.
-- Si `AGENTS.md` existe déjà à la racine, le script refuse sauf si vous passez `--force-agents` ou `--backup-agents`.
-
-Après l'export, configurez le serveur MCP GitHub pour votre IDE — voir `mcp.example.json` et `docs/design/architecture.md`.
+Après l'export, authentifiez GitHub CLI (`gh auth login`) et consultez `docs/design/architecture.md`.
 
 ---
 
 ## Démarrage rapide
 
-`AGENTS.md` est le point d'entrée universel. Il est chargé automatiquement par OpenCode et Claude Code. Le dossier `prompts/commands/cursor/` est une archive historique pouvant servir d'inspiration pour recréer des commandes slash Cursor.
+`AGENTS.md` est le point d'entrée universel. Il est chargé automatiquement par OpenCode et Claude Code. Le dossier `prompts/commands/cursor/` est une archive de référence — non plug-and-play, à utiliser comme inspiration pour recréer des commandes slash Cursor.
 
 ### Prérequis
 
 - N'importe quel agent IA (OpenCode, Claude Code, Cursor mode agent, GitHub Copilot Chat, ...)
 - Dépôt Git avec le workflow installé (voir [Installation](#installation))
-- (Optionnel) Serveur MCP GitHub pour le mode ciblé — voir `mcp.example.json`
+- GitHub CLI authentifié (`gh auth login`) pour le mode ciblé
+- `curl` disponible pour Context7 (`scripts/c7-docs.sh`)
+- Optionnel : définir `CONTEXT_BUDGET=low|medium|high` dans `.env` pour contrôler la taille du contexte (défaut : `low`)
 
 ### Le workflow en trois phases
 
@@ -102,26 +100,29 @@ Après l'export, configurez le serveur MCP GitHub pour votre IDE — voir `mcp.e
 1. Lire `aidd/memory/activeContext.md` et `aidd/memory/projectbrief.md`
 2. Charger `prompts/intake.md` → produit `aidd/work/INTAKE.md`
 3. Charger `prompts/plan.md` → produit `aidd/work/PLAN.md`
-4. Lancer la porte : `bash scripts/validate-plan.sh` — ne pas continuer si elle échoue
+4. Lancer la gate : `bash scripts/validate-plan.sh` — ne pas continuer si elle échoue
 
 **Phase 2 — Éditeur** (construire sous contraintes)
 
-5. Charger les règles pertinentes depuis `rules/` (voir `rules/INDEX.md` pour les règles always-apply)
-6. Implémenter en suivant `aidd/work/PLAN.md` exactement
+5. Lancer `bash scripts/aidd-rules-jit.sh` → produit `aidd/work/RULES_JIT.md` avec les règles minimales pertinentes
+6. Implémenter en suivant `aidd/work/PLAN.md` exactement — pas de scope creep
 7. Lancer : `bash scripts/aidd-check.sh`
 
 **Phase 3 — Reviewer** (audit humain obligatoire)
 
 8. Charger `prompts/review.md` → produit `aidd/work/REVIEW.md`
-9. Lancer la porte : `bash scripts/review-check.sh` — tâche non terminée tant que le Verdict n'est pas `APPROVE`
+9. Lancer la gate : `bash scripts/review-check.sh` — tâche non terminée tant que le Verdict n'est pas `APPROVE`
+10. Clôture optionnelle : `bash scripts/aidd-finish.sh` (commit/push/PR guidé + nettoyage + handoff)
 
 ### Points d'entrée par IDE
 
 | Agent | Point d'entrée |
 |-------|----------------|
 | OpenCode / Claude Code | `AGENTS.md` chargé automatiquement au démarrage de session |
-| Cursor | Archive historique dans `prompts/commands/cursor/` (non plug-and-play) |
+| Cursor | Archive de référence dans `prompts/commands/cursor/` — non plug-and-play, à adapter en commandes slash |
 | Autres agents | Copier le contenu du `prompts/*.md` pertinent dans votre contexte de chat |
+
+**Note Claude Code :** `AGENTS.md` est le point d'entrée de portée projet. Claude Code maintient également sa propre mémoire inter-projets dans `~/.claude/` — les deux couches sont complémentaires : `aidd/memory/` porte le contexte projet, `~/.claude/` les préférences et patterns de l'agent. Utilisez `prompts/compact-response.md` comme gabarit de référence pour les sorties économes en tokens.
 
 ---
 
@@ -160,30 +161,37 @@ Ces artefacts documentent **ce qui a été décidé**, **pourquoi cela a été d
 ```
 aidd-flow/
 ├── AGENTS.md                  # Point d'entrée universel (3 modes + gates + RTK)
-├── mcp.example.json           # Template serveur MCP GitHub
-├── .env.example               # Variables d'environnement requises
+├── .env.example               # Variables d'environnement optionnelles
 │
 ├── aidd/
 │   ├── memory/                # Contexte persistant — remplir une fois par projet
-│   ├── work/                  # Artefacts runtime — gitignorés (AUDIT, INTAKE, PLAN, REVIEW)
-│   └── review/                # Listes de contrôle de revue par domaine (web3, ml)
+│   ├── work/                  # Artefacts runtime — gitignorés (AUDIT, INTAKE, PLAN, REVIEW, SUMMARY, HANDOFF)
+│   └── review/                # Listes de contrôle de revue par domaine (web3, ml, general)
 │
 ├── rules/                     # 30+ règles Markdown
 │   └── INDEX.md               # Catalogue des règles (always-apply, par stack, deprecated)
 │
 ├── prompts/                   # Prompts du workflow (start, intake, plan, audit, review, ...)
+│   ├── compact-response.md    # Gabarit de sortie économe en tokens
 │   └── commands/cursor/       # Commandes slash Cursor (référence archivée)
 │
 ├── scripts/                   # Scripts de portes de validation
 │   ├── validate-plan.sh       # Porte : bloque l'implémentation si PLAN.md est invalide
 │   ├── review-check.sh        # Porte : bloque la complétion si REVIEW.md n'est pas APPROVE
 │   ├── aidd-check.sh          # Vérifications post-implémentation
+│   ├── aidd-finish.sh         # Commit/push/PR guidé + nettoyage + handoff
 │   ├── aidd-export.sh         # Exporte le framework vers un projet cible
+│   ├── gh-context.sh          # Signaux GitHub factuels via gh CLI
+│   ├── c7-docs.sh             # Documentation Context7 via curl (preuve obligatoire)
+│   ├── aidd-rules-jit.sh      # Sélection des règles juste-à-temps
+│   ├── aidd-diff-digest.sh    # Digest compact des diffs pour review
+│   ├── aidd-verify-ui.sh      # Vérification des changements UI
 │   └── aidd-cleanup.sh        # Archive les artefacts aidd/work/ de plus de 30 jours
 │
 └── docs/
-    ├── workflow.md             # Référence complète du workflow
-    ├── design/architecture.md  # Configuration MCP, guide d'export, ADRs du framework
+    ├── workflow/              # Référence complète du workflow (overview, gates, gouvernance, debug, ...)
+    ├── design/architecture.md  # Modèle d'export et décisions d'architecture
+    ├── templates/AGENTS.root.md  # Template AGENTS racine utilisé par l'export
     └── quality/               # Spécifications des artefacts (intake, technical-plan)
 ```
 
@@ -192,7 +200,7 @@ aidd-flow/
 ## Documentation
 
 - [Guide du workflow](docs/workflow/README.md) : Méthode complète du workflow avec gates, gouvernance et dépannage
-- [Guide d'architecture](docs/design/architecture.md) : Configuration MCP par IDE, guide d'export, décisions de conception
+- [Guide d'architecture](docs/design/architecture.md) : Modèle d'export, décisions de conception
 - [Spécification INTAKE](docs/quality/intake.md) : Structure et exigences de l'artefact INTAKE.md
 - [Spécification PLAN](docs/quality/technical-plan.md) : Structure et exigences de l'artefact PLAN.md
 - [Index des règles](rules/INDEX.md) : Toutes les règles avec les flags always-apply et deprecated
@@ -211,7 +219,7 @@ source_commit: abc123def456...
 template_version: 1.0.0
 ```
 
-Ré-exécutez `aidd-export.sh` depuis le dépôt source pour mettre à jour. Utilisez `--backup` pour préserver le répertoire `aidd/` existant.
+Ré-exécutez `aidd-export.sh` depuis le dépôt source pour mettre à jour. Utilisez `--backup` pour préserver le répertoire `.aidd-flow/` existant.
 
 ---
 

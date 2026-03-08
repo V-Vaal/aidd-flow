@@ -10,6 +10,7 @@ aidd/work/*
 aidd/aidd.lock
 docs/plans/active/*
 !docs/plans/active/.gitkeep
+cache/
 
 # OS
 .DS_Store

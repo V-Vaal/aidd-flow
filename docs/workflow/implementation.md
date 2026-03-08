@@ -7,6 +7,8 @@ Execute the plan under constraints and verify results before review.
 - Use your AI agent
 - Follow rules in `rules/`
 - Reference PLAN.md steps exactly
+- Before coding against external libraries, run `bash scripts/c7-docs.sh ...` (mandatory)
+- Keep `aidd/work/SUMMARY.md` concise and up to date
 
 ## Checks
 

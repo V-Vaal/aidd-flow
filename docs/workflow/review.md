@@ -13,6 +13,11 @@ Human audit required before marking work complete.
 - Verdict must be exactly one of: `APPROVE` or `CHANGES_REQUESTED`
 - Task is not done until Verdict is `APPROVE`
 - Include test evidence (aidd-check.sh and aidd-verify-ui.sh if applicable)
+- Use domain checklist:
+  - web3 -> web3 checklist
+  - ml -> ml checklist
+  - mixed -> both
+  - other/unknown -> general checklist
 
 ## Finish Step (Optional)
 
@@ -26,5 +31,6 @@ It walks through:
 
 - Commit / push / PR (with human confirmation and suggested commit message)
 - Active context update
+- Optional `HANDOFF.md` generation
 - Cleanup choice (archive via `aidd-cleanup.sh` vs purge work artifacts)
 - Optional restart of INTAKE from review follow-ups

@@ -1,18 +1,25 @@
 #!/bin/bash
 
-# AIDD Context: Generate compact context bundle for LLMs
-# Prints: repo tree (depth 3), git status, last 10 commits, key config files
-# Run from repository root: bash scripts/aidd-context.sh
-#
+# AIDD Context: generate a compact context bundle for LLM sessions.
 # Usage:
 #   aidd-context.sh [--verbose]
-#   --verbose    Include full file contents and extended details
+# Env:
+#   CONTEXT_BUDGET=low|medium|high (default: low)
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+AIDD_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+if [ "$(basename "$AIDD_ROOT")" = ".aidd-flow" ]; then
+    PROJECT_ROOT="$(cd "$AIDD_ROOT/.." && pwd)"
+else
+    PROJECT_ROOT="$AIDD_ROOT"
+fi
 
-# Parse optional flags
+MEMORY_DIR="$AIDD_ROOT/aidd/memory"
+WORK_DIR="$AIDD_ROOT/aidd/work"
+RULES_DIR="$AIDD_ROOT/rules"
+
 VERBOSE=0
 for arg in "$@"; do
     case "$arg" in
@@ -27,279 +34,112 @@ for arg in "$@"; do
     esac
 done
 
-# Resolve repository root and key directories
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-PROJECT_ROOT="$REPO_ROOT"
-MEMORY_DIR="$REPO_ROOT/aidd/memory"
-WORK_DIR="$REPO_ROOT/aidd/work"
-RULES_DIR="$REPO_ROOT/rules"
+CONTEXT_BUDGET="${CONTEXT_BUDGET:-low}"
+case "$CONTEXT_BUDGET" in
+    low|medium|high) ;;
+    *) CONTEXT_BUDGET="low" ;;
+esac
 
-# Verify PROJECT_ROOT exists before changing directory
-if [ ! -d "$PROJECT_ROOT" ]; then
-    echo "Error: Project root directory does not exist: $PROJECT_ROOT"
-    echo "  Script location: $SCRIPT_DIR"
-    exit 1
+if [ "$VERBOSE" -eq 1 ]; then
+    CONTEXT_BUDGET="high"
 fi
 
 cd "$PROJECT_ROOT"
 
 echo "=== AIDD Context Bundle ==="
 echo ""
-echo "Generated: $(date)"
+echo "Generated: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 echo "Project: $(basename "$PROJECT_ROOT")"
-if [ "$VERBOSE" -eq 1 ]; then
-    echo "Mode: verbose (full dump)"
-else
-    echo "Mode: concise (steps + key paths)"
-fi
+echo "Context budget: $CONTEXT_BUDGET"
 echo ""
 
-# 1. Repository tree (depth 3)
-if [ "$VERBOSE" -eq 1 ]; then
-echo "=== Repository Structure (depth 3) ==="
-if command -v tree &> /dev/null; then
-    tree -L 3 -I 'node_modules|.git|__pycache__|target|dist|build' 2>/dev/null || find . -maxdepth 3 -not -path '*/node_modules/*' -not -path '*/.git/*' -not -path '*/__pycache__/*' -not -path '*/target/*' -not -path '*/dist/*' -not -path '*/build/*' | head -50 || true
-else
-    find . -maxdepth 3 -not -path '*/node_modules/*' -not -path '*/.git/*' -not -path '*/__pycache__/*' -not -path '*/target/*' -not -path '*/dist/*' -not -path '*/build/*' 2>/dev/null | head -50 || true
-fi
-echo ""
-else
-    echo "=== Repository Structure (key paths) ==="
-    find . -maxdepth 2 -type f \( -name "*.md" -o -name "*.json" -o -name "*.toml" -o -name "*.yml" -o -name "*.yaml" \) 2>/dev/null | grep -v node_modules | grep -v .git | head -20 || true
-    echo ""
-fi
-
-# 2. Git status
-if [ -d ".git" ] && command -v git &> /dev/null; then
-    if [ "$VERBOSE" -eq 1 ]; then
-    echo "=== Git Status ==="
-    git status --short 2>/dev/null || echo "(git status failed)"
-    echo ""
-    
-    echo "=== Recent Commits (last 10) ==="
-    git log --oneline -10 2>/dev/null || echo "(git log failed)"
-    echo ""
-    
-    echo "=== Current Branch ==="
-    git branch --show-current 2>/dev/null || echo "(git branch failed)"
-    echo ""
-else
-        echo "=== Git Status ==="
-        BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
-        CHANGES=$(git status --short 2>/dev/null | wc -l | tr -d ' ' || echo "0")
-        echo "Branch: $BRANCH, Uncommitted changes: $CHANGES"
-        echo ""
-    fi
-else
-    if [ "$VERBOSE" -eq 1 ]; then
-    echo "=== Git Status ==="
-    echo "Not a git repository or git not available"
-    echo ""
-    fi
-fi
-
-# 3. Key config files
-if [ "$VERBOSE" -eq 1 ]; then
-echo "=== Key Configuration Files ==="
-
-# Package managers
-[ -f "package.json" ] && echo "✓ package.json" && (head -20 "package.json" 2>/dev/null || echo "(read failed)")
-[ -f "Cargo.toml" ] && echo "✓ Cargo.toml" && (head -20 "Cargo.toml" 2>/dev/null || echo "(read failed)")
-[ -f "pyproject.toml" ] && echo "✓ pyproject.toml" && (head -20 "pyproject.toml" 2>/dev/null || echo "(read failed)")
-[ -f "requirements.txt" ] && echo "✓ requirements.txt" && (head -10 "requirements.txt" 2>/dev/null || echo "(read failed)")
-[ -f "Pipfile" ] && echo "✓ Pipfile" && (head -20 "Pipfile" 2>/dev/null || echo "(read failed)")
-
-# Build configs
-[ -f "tsconfig.json" ] && echo "✓ tsconfig.json"
-[ -f "next.config.js" ] && echo "✓ next.config.js"
-[ -f "next.config.ts" ] && echo "✓ next.config.ts"
-[ -f "vite.config.js" ] && echo "✓ vite.config.js"
-[ -f "vite.config.ts" ] && echo "✓ vite.config.ts"
-[ -f "webpack.config.js" ] && echo "✓ webpack.config.js"
-[ -f "hardhat.config.js" ] && echo "✓ hardhat.config.js"
-[ -f "hardhat.config.ts" ] && echo "✓ hardhat.config.ts"
-[ -f "foundry.toml" ] && echo "✓ foundry.toml"
-
-# CI/CD
-[ -d ".github/workflows" ] && echo "✓ .github/workflows/ (exists)"
-[ -f ".gitlab-ci.yml" ] && echo "✓ .gitlab-ci.yml"
-
-# Linting/formatting
-[ -f ".eslintrc" ] && echo "✓ .eslintrc"
-[ -f ".eslintrc.js" ] && echo "✓ .eslintrc.js"
-[ -f ".eslintrc.json" ] && echo "✓ .eslintrc.json"
-[ -f ".prettierrc" ] && echo "✓ .prettierrc"
-[ -f ".prettierrc.js" ] && echo "✓ .prettierrc.js"
-[ -f ".clippy.toml" ] && echo "✓ .clippy.toml"
-[ -f "pyproject.toml" ] && echo "✓ pyproject.toml (may contain lint config)"
-
-# Documentation
-[ -f "README.md" ] && echo "✓ README.md (root)"
-[ -f "CHANGELOG.md" ] && echo "✓ CHANGELOG.md (root)"
-[ -f "docs/workflow.md" ] && echo "✓ docs/workflow.md"
-
-echo ""
-else
-    echo "=== Key Configuration Files ==="
-    CONFIG_FILES=()
-    [ -f "package.json" ] && CONFIG_FILES+=("package.json")
-    [ -f "Cargo.toml" ] && CONFIG_FILES+=("Cargo.toml")
-    [ -f "pyproject.toml" ] && CONFIG_FILES+=("pyproject.toml")
-    [ -f "requirements.txt" ] && CONFIG_FILES+=("requirements.txt")
-    [ -d ".github/workflows" ] && CONFIG_FILES+=(".github/workflows/")
-    [ -f "tsconfig.json" ] && CONFIG_FILES+=("tsconfig.json")
-    [ -f "README.md" ] && CONFIG_FILES+=("README.md")
-    
-    if [ ${#CONFIG_FILES[@]} -gt 0 ]; then
-        printf '%s\n' "${CONFIG_FILES[@]}"
+print_compact_tree() {
+    if command -v tree >/dev/null 2>&1; then
+        tree -L 2 -I 'node_modules|.git|__pycache__|target|dist|build|.cache' 2>/dev/null || true
     else
-        echo "(none detected)"
+        find . -maxdepth 2 -not -path '*/node_modules/*' -not -path '*/.git/*' | head -80 || true
     fi
-    echo ""
+}
+
+print_medium_tree() {
+    if command -v tree >/dev/null 2>&1; then
+        tree -L 3 -I 'node_modules|.git|__pycache__|target|dist|build|.cache' 2>/dev/null || true
+    else
+        find . -maxdepth 3 -not -path '*/node_modules/*' -not -path '*/.git/*' | head -140 || true
+    fi
+}
+
+echo "=== Repo Shape ==="
+if [ "$CONTEXT_BUDGET" = "low" ]; then
+    print_compact_tree
+else
+    print_medium_tree
 fi
-
-# 4. Project type detection
-echo "=== Project Type Detection ==="
-if [ -f "package.json" ]; then
-    echo "Type: Node.js/TypeScript"
-    if grep -q '"react"' "package.json" 2>/dev/null; then
-        echo "  Framework: React"
-    fi
-    if grep -q '"next"' "package.json" 2>/dev/null; then
-        echo "  Framework: Next.js"
-    fi
-    if grep -q '"hardhat"' "package.json" 2>/dev/null; then
-        echo "  Tool: Hardhat"
-    fi
-fi
-
-[ -f "Cargo.toml" ] && echo "Type: Rust"
-[ -f "requirements.txt" ] && echo "Type: Python"
-[ -f "pyproject.toml" ] && echo "Type: Python (modern)"
-
 echo ""
 
-# 5. AIDD Rules Available
-if [ -d "$RULES_DIR" ]; then
-    echo "=== AIDD Rules Available ==="
-    RULES_COUNT=$(find "$RULES_DIR" -name "*.md" -type f 2>/dev/null | wc -l | tr -d ' ' || echo "0")
-    echo "Total rules: $RULES_COUNT"
+if [ -d .git ] && command -v git >/dev/null 2>&1; then
+    echo "=== Git Snapshot ==="
+    echo "Branch: $(git branch --show-current 2>/dev/null || echo unknown)"
+    echo "Changes: $(git status --short 2>/dev/null | wc -l | tr -d ' ')"
+    if [ "$CONTEXT_BUDGET" != "low" ]; then
+        echo "Recent commits:"
+        git log --oneline -10 2>/dev/null || true
+    fi
     echo ""
 fi
 
-# 6. Memory Bank
-# Context-size design: Memory Bank files are core project knowledge
-# In concise mode: show informational line if present
-# In verbose mode: include full contents for detailed context
+echo "=== Key Artefacts ==="
+for f in "$WORK_DIR/SUMMARY.md" "$WORK_DIR/HANDOFF.md" "$WORK_DIR/DIFF_DIGEST.md" "$WORK_DIR/RULES_JIT.md"; do
+    if [ -f "$f" ]; then
+        echo "- $(basename "$f")"
+    fi
+done
+echo ""
+
+if [ -f "$WORK_DIR/SUMMARY.md" ]; then
+    echo "=== SUMMARY.md (priority) ==="
+    head -80 "$WORK_DIR/SUMMARY.md"
+    echo ""
+fi
+
+if [ -f "$WORK_DIR/HANDOFF.md" ] && [ "$CONTEXT_BUDGET" != "low" ]; then
+    echo "=== HANDOFF.md ==="
+    head -120 "$WORK_DIR/HANDOFF.md"
+    echo ""
+fi
+
+if [ -f "$WORK_DIR/DIFF_DIGEST.md" ] && [ "$CONTEXT_BUDGET" != "low" ]; then
+    echo "=== DIFF_DIGEST.md ==="
+    head -120 "$WORK_DIR/DIFF_DIGEST.md"
+    echo ""
+fi
+
 if [ -d "$MEMORY_DIR" ]; then
-    if [ "$VERBOSE" -eq 1 ]; then
-        # Verbose mode: full dump
-        echo "=== Memory Bank ==="
-        
-        # Include core memory files if present
-        MEMORY_FILES=(
-            "projectbrief.md"
-            "techContext.md"
-            "systemPatterns.md"
-            "activeContext.md"
-        )
-        
-        for mem_file in "${MEMORY_FILES[@]}"; do
-            if [ -f "$MEMORY_DIR/$mem_file" ]; then
-                echo ""
-                echo "--- $mem_file ---"
-                cat "$MEMORY_DIR/$mem_file" 2>/dev/null || echo "(read failed)"
-            fi
-        done
-        echo ""
-    else
-        # Concise mode: informational line only
-        MEMORY_FILES=(
-            "projectbrief.md"
-            "techContext.md"
-            "systemPatterns.md"
-            "activeContext.md"
-        )
-        
-        MEMORY_COUNT=0
-        for mem_file in "${MEMORY_FILES[@]}"; do
-            if [ -f "$MEMORY_DIR/$mem_file" ]; then
-                MEMORY_COUNT=$((MEMORY_COUNT + 1))
-            fi
-        done
-        
-        if [ "$MEMORY_COUNT" -gt 0 ]; then
-            printf "Memory Bank: present (%d file" "$MEMORY_COUNT"
-            if [ "$MEMORY_COUNT" -eq 1 ]; then
-                printf ") — use --verbose to inspect\n"
+    echo "=== Memory ==="
+    for f in projectbrief.md techContext.md systemPatterns.md activeContext.md tooling-notes.md; do
+        if [ -f "$MEMORY_DIR/$f" ]; then
+            if [ "$CONTEXT_BUDGET" = "high" ]; then
+                echo "--- $f ---"
+                head -140 "$MEMORY_DIR/$f"
             else
-                printf "s) — use --verbose to inspect\n"
-            fi
-            echo ""
-        fi
-    fi
-fi
-
-# 7. Work/Review Artefacts (bounded inclusion)
-# Context-size design: Only include current work artefacts, not historical/accumulated files
-# This keeps context focused on active work while preventing unbounded growth
-if [ -d "$WORK_DIR" ]; then
-    if [ "$VERBOSE" -eq 1 ]; then
-    echo "=== Work Artefacts (Current) ==="
-    
-    # Include current work files if present (not historical)
-    WORK_FILES=(
-        "INTAKE.md"
-        "PLAN.md"
-        "REVIEW.md"
-        "CHECKLIST.md"
-    )
-    
-    for work_file in "${WORK_FILES[@]}"; do
-        if [ -f "$WORK_DIR/$work_file" ]; then
-            echo ""
-            echo "--- $work_file ---"
-            # Limit size: show first 100 lines to prevent unbounded context
-            head -100 "$WORK_DIR/$work_file" 2>/dev/null || echo "(read failed)"
-            LINE_COUNT=$(wc -l < "$WORK_DIR/$work_file" 2>/dev/null | tr -d ' ' || echo "0")
-            if [ "$LINE_COUNT" -gt 100 ]; then
-                echo ""
-                echo "... (truncated, $LINE_COUNT total lines)"
+                echo "- $f"
             fi
         fi
     done
     echo ""
-    else
-        echo "=== Work Artefacts ==="
-        WORK_FILES=("INTAKE.md" "PLAN.md" "REVIEW.md" "CHECKLIST.md")
-        for work_file in "${WORK_FILES[@]}"; do
-            if [ -f "$WORK_DIR/$work_file" ]; then
-                # Extract key info: Status, Change Class, Goal (first line after ## Goal)
-                STATUS=$(grep -iE "^\*\*Artefact Status\*\*" "$WORK_DIR/$work_file" 2>/dev/null | head -1 | sed 's/.*\*\*Artefact Status\*\*[[:space:]]*:[[:space:]]*//' | cut -d'|' -f1 | tr -d ' ' || echo "")
-                CLASS=$(grep -iE "^\*\*Change Class\*\*" "$WORK_DIR/$work_file" 2>/dev/null | head -1 | sed 's/.*\*\*Change Class\*\*[[:space:]]*:[[:space:]]*//' | cut -d'|' -f1 | tr -d ' ' || echo "")
-                GOAL=$(awk '/^## Goal/,/^## / {if (/^## Goal/) next; if (/^## /) exit; print}' "$WORK_DIR/$work_file" 2>/dev/null | head -1 | sed 's/^\[//;s/\]$//' | cut -c1-50 || echo "")
-                echo "  $work_file: Status=$STATUS Class=$CLASS Goal=$GOAL"
-            fi
-        done
-        echo ""
-    fi
 fi
 
-# 8. Review Checklists (domain-specific)
-# Context-size design: Include review checklists as reference, but limit to current domain
-# This provides relevant security/quality guidance without overwhelming context
-REVIEW_DIR="$REPO_ROOT/aidd/review"
-
-if [ -d "$REVIEW_DIR" ]; then
-    # Only include if there are checklist files (avoid empty section)
-    CHECKLIST_COUNT=$(find "$REVIEW_DIR" -name "review-checklist-*.md" -type f 2>/dev/null | wc -l | tr -d ' ' || echo "0")
-    if [ "$CHECKLIST_COUNT" -gt 0 ]; then
-        echo "=== Review Checklists Available ==="
-        find "$REVIEW_DIR" -name "review-checklist-*.md" -type f 2>/dev/null -print0 | while IFS= read -r -d '' checklist; do
-            echo "  - $(basename "$checklist")"
-        done
-        echo ""
+if [ -d "$RULES_DIR" ]; then
+    echo "=== Rules ==="
+    count=$(find "$RULES_DIR" -name '*.md' -type f | wc -l | tr -d ' ')
+    echo "Total rules: $count"
+    if [ -f "$WORK_DIR/RULES_JIT.md" ]; then
+      echo "JIT selection available: $WORK_DIR/RULES_JIT.md"
+      if [ "$CONTEXT_BUDGET" != "low" ]; then
+          head -80 "$WORK_DIR/RULES_JIT.md"
+      fi
     fi
+    echo ""
 fi
 
 echo "=== End of Context Bundle ==="

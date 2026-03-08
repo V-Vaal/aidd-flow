@@ -99,6 +99,10 @@ if [ -z "$DOMAIN" ] || [ "$DOMAIN" = "other" ]; then
     fi
 fi
 
+if [ -z "$DOMAIN" ]; then
+    DOMAIN="other"
+fi
+
 # Suggest checklists based on domain
 echo ""
 echo -e "${BLUE}=== Domain-Specific Checklists ===${NC}"
@@ -130,10 +134,18 @@ elif [ "$DOMAIN" = "mixed" ]; then
         echo -e "  - ML: ${ML_CHECKLIST}"
     fi
     echo -e "  Review both checklists and ensure all relevant items are addressed."
+elif [ "$DOMAIN" = "other" ]; then
+    CHECKLIST_FILE="$REVIEW_DIR/review-checklist-general.md"
+    if [ -f "$CHECKLIST_FILE" ]; then
+        echo -e "${GREEN}✓ General checklist available: ${CHECKLIST_FILE}${NC}"
+        echo -e "  Review the checklist and ensure all relevant items are addressed."
+    else
+        echo -e "${RED}✗ General checklist required but not found at ${CHECKLIST_FILE}${NC}"
+        ERRORS=$((ERRORS + 1))
+    fi
 else
-    echo -e "${YELLOW}⚠ No domain-specific checklist applies${NC}"
-    echo -e "  Domain: ${DOMAIN:-not detected}"
-    echo -e "  Update techContext.md with Domain metadata (web3 | ml | mixed | other) to enable checklist suggestions."
+    echo -e "${YELLOW}⚠ Unknown domain value: ${DOMAIN}${NC}"
+    echo -e "  Falling back to general checklist expectations."
 fi
 
 # Summary

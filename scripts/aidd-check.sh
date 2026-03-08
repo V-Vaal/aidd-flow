@@ -41,18 +41,92 @@ for arg in "$@"; do
     esac
 done
 
-# Resolve repository root and key directories
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-PROJECT_ROOT="$REPO_ROOT"
-WORK_DIR="$REPO_ROOT/aidd/work"
+# Resolve AIDD root and project root
+AIDD_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+if [ "$(basename "$AIDD_ROOT")" = ".aidd-flow" ]; then
+    PROJECT_ROOT="$(cd "$AIDD_ROOT/.." && pwd)"
+    C7_HINT_CMD="bash .aidd-flow/scripts/c7-docs.sh --library <id> [--topic <topic>]"
+else
+    PROJECT_ROOT="$AIDD_ROOT"
+    C7_HINT_CMD="bash scripts/c7-docs.sh --library <id> [--topic <topic>]"
+fi
+WORK_DIR="$AIDD_ROOT/aidd/work"
+SUMMARY_FILE="$WORK_DIR/SUMMARY.md"
+CONTEXT_BUDGET="${CONTEXT_BUDGET:-low}"
+
+case "$CONTEXT_BUDGET" in
+    low|medium|high) ;;
+    *)
+        echo -e "${YELLOW}Warning: invalid CONTEXT_BUDGET='$CONTEXT_BUDGET', using 'low'${NC}"
+        CONTEXT_BUDGET="low"
+        ;;
+esac
+
+ensure_work_files() {
+    mkdir -p "$WORK_DIR"
+    if [ ! -f "$SUMMARY_FILE" ]; then
+        cat > "$SUMMARY_FILE" <<'EOF'
+# Summary
+
+## Context Budget
+
+- low
+
+## Context7 Evidence
+
+None yet.
+
+## Phase Snapshots
+
+EOF
+    fi
+}
+
+context7_evidence_present() {
+    [ -f "$SUMMARY_FILE" ] || return 1
+    awk '
+        /^## Context7 Evidence/ {in_section=1; next}
+        /^## / && in_section {exit}
+        in_section && $0 ~ /^- / {found=1}
+        END {exit(found ? 0 : 1)}
+    ' "$SUMMARY_FILE"
+}
+
+refresh_summary_snapshot() {
+    local timestamp
+    timestamp=$(date -u "+%Y-%m-%dT%H:%M:%SZ")
+
+    # Keep a compact rolling snapshot for quick resume.
+    awk -v budget="$CONTEXT_BUDGET" '
+        BEGIN {in_budget=0; done=0}
+        /^## Context Budget/ {print; print ""; print "- " budget; in_budget=1; done=1; next}
+        /^## / && in_budget {in_budget=0}
+        !in_budget {print}
+        END {
+            if (!done) {
+                print ""
+                print "## Context Budget"
+                print ""
+                print "- " budget
+            }
+        }
+    ' "$SUMMARY_FILE" > "$SUMMARY_FILE.tmp" && mv "$SUMMARY_FILE.tmp" "$SUMMARY_FILE"
+
+    {
+        echo "- ${timestamp} | budget=${CONTEXT_BUDGET} | errors=${ERRORS} | warnings=${WARNINGS}"
+    } >> "$SUMMARY_FILE"
+}
 
 ERRORS=0
 WARNINGS=0
 
 echo -e "${BLUE}=== AIDD Check ===${NC}"
 echo ""
+echo -e "${BLUE}Context budget: ${CONTEXT_BUDGET}${NC}"
+echo ""
 
 cd "$PROJECT_ROOT"
+ensure_work_files
 
 # 1. Validate INTAKE.md (if exists)
 INTAKE_FILE="$WORK_DIR/INTAKE.md"
@@ -96,7 +170,19 @@ echo ""
 
 # 3. Verify expected scripts exist
 echo -e "${BLUE}[3/5] Verifying expected scripts...${NC}"
-EXPECTED_SCRIPTS=("validate-rules.sh" "validate-plan.sh" "review-check.sh" "aidd-export.sh" "aidd-context.sh" "aidd-verify-ui.sh" "aidd-check.sh")
+EXPECTED_SCRIPTS=(
+    "validate-rules.sh"
+    "validate-plan.sh"
+    "review-check.sh"
+    "aidd-export.sh"
+    "aidd-context.sh"
+    "aidd-verify-ui.sh"
+    "aidd-check.sh"
+    "gh-context.sh"
+    "c7-docs.sh"
+    "aidd-rules-jit.sh"
+    "aidd-diff-digest.sh"
+)
 for script_name in "${EXPECTED_SCRIPTS[@]}"; do
     script_path="$SCRIPT_DIR/$script_name"
     if [ -f "$script_path" ]; then
@@ -262,6 +348,40 @@ else
 fi
 echo ""
 
+# Generate compact helper artefacts for low-token resume.
+echo -e "${BLUE}[+] Generating compact helper artefacts...${NC}"
+RULES_JIT_SCRIPT="$SCRIPT_DIR/aidd-rules-jit.sh"
+if [ -f "$RULES_JIT_SCRIPT" ]; then
+    if output=$(bash "$RULES_JIT_SCRIPT" 2>/dev/null); then
+        echo -e "${GREEN}✓ Rules JIT generated: ${output}${NC}"
+    else
+        echo -e "${YELLOW}⚠ Failed to generate Rules JIT selection${NC}"
+        WARNINGS=$((WARNINGS + 1))
+    fi
+fi
+
+DIFF_DIGEST_SCRIPT="$SCRIPT_DIR/aidd-diff-digest.sh"
+if [ -f "$DIFF_DIGEST_SCRIPT" ]; then
+    if output=$(bash "$DIFF_DIGEST_SCRIPT" 2>/dev/null); then
+        echo -e "${GREEN}✓ Diff digest generated: ${output}${NC}"
+    else
+        echo -e "${YELLOW}⚠ Failed to generate diff digest${NC}"
+        WARNINGS=$((WARNINGS + 1))
+    fi
+fi
+echo ""
+
+# Context7 evidence is mandatory for this workflow.
+echo -e "${BLUE}[+] Checking Context7 evidence (mandatory)...${NC}"
+if context7_evidence_present; then
+    echo -e "${GREEN}✓ Context7 evidence found in $SUMMARY_FILE${NC}"
+else
+    echo -e "${RED}✗ Missing Context7 evidence in $SUMMARY_FILE${NC}"
+    echo -e "${RED}  Action: run ${C7_HINT_CMD}${NC}"
+    ERRORS=$((ERRORS + 1))
+fi
+echo ""
+
 # Optional: Validate PLAN.md (if --plan flag provided)
 if [ "$CHECK_PLAN" -eq 1 ]; then
     echo -e "${BLUE}[+] Validating PLAN.md (optional)...${NC}"
@@ -305,6 +425,8 @@ if [ "$CHECK_REVIEW" -eq 1 ]; then
 fi
 
 # Summary and next actions
+refresh_summary_snapshot
+
 echo -e "${BLUE}=== Summary ===${NC}"
 echo ""
 

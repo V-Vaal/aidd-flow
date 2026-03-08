@@ -11,6 +11,7 @@ Complete workflow lifecycle for executing AI-assisted development tasks with str
 5. **VERIFY** → Run gates (validate-plan.sh, aidd-check.sh)
 6. **REVIEW** → Code review with Verdict (APPROVE | CHANGES_REQUESTED)
 7. **UPDATE CONTEXT** → Update activeContext.md with completion
+8. **HANDOFF** → Generate compact transfer artefacts (SUMMARY/HANDOFF)
 
 ## Workflow Steps
 
@@ -18,6 +19,7 @@ Complete workflow lifecycle for executing AI-assisted development tasks with str
 - Prompt: `prompts/audit.md` or `prompts/start.md` (exploratory mode)
 - Creates: `aidd/work/AUDIT.md`
 - Use findings to inform planning
+- GitHub signals source: `bash scripts/gh-context.sh ...`
 
 **1. Intake**
 - Prompt: `prompts/intake.md`
@@ -39,6 +41,7 @@ Complete workflow lifecycle for executing AI-assisted development tasks with str
 - Use your AI agent
 - Follow rules in `rules/`
 - Reference PLAN.md steps
+- Run `bash scripts/c7-docs.sh ...` before coding against external library APIs
 
 **5. Checks**
 - `bash scripts/aidd-check.sh`
@@ -54,3 +57,8 @@ Complete workflow lifecycle for executing AI-assisted development tasks with str
 - Prompt: Update `aidd/memory/activeContext.md`
 - Updates: `aidd/memory/activeContext.md`
 - Document what was completed, current state, next steps
+
+**8. Handoff / Token-efficient resume**
+- Keep `aidd/work/SUMMARY.md` up to date through the cycle
+- Run `bash scripts/aidd-finish.sh` to generate `aidd/work/HANDOFF.md`
+- Use `CONTEXT_BUDGET=low|medium|high` (default `low`) with `bash scripts/aidd-context.sh`

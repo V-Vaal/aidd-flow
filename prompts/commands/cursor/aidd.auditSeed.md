@@ -101,7 +101,7 @@ Populate factual sections of AUDIT.md by analyzing the repository and GitHub sig
 5. Populate "External Signals (GitHub)" section in AUDIT.md with:
    - Reference to `.cursor/work/github-signals.config.yml`
    - Restate filters used (from github-signals.md)
-   - Retrieval method (MCP or manual, from github-signals.md)
+   - Retrieval method (gh-context, from github-signals.md)
    - Results summary (counts from github-signals.md)
    - Issues list (exact format from github-signals.md)
    - PRs list (exact format from github-signals.md)

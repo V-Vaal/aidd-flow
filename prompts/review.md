@@ -12,6 +12,7 @@ Perform code review with test evidence, risk assessment, and formal verdict. Thi
 - `aidd/memory/techContext.md` (for domain-specific checklist suggestions)
 - `aidd/review/review-checklist-web3.md` (if Domain is web3)
 - `aidd/review/review-checklist-ml.md` (if Domain is ml)
+- `aidd/review/review-checklist-general.md` (if Domain is other/unknown)
 
 ## Output Artefact
 
@@ -83,6 +84,9 @@ Perform code review with test evidence, risk assessment, and formal verdict. Thi
      - Verify data leakage, train/val/test split, reproducibility, dataset provenance, metrics definition, overfitting checks, configuration tracking, baseline comparison
    - If Domain is "mixed":
      - Reference both checklists
+   - If Domain is "other" or unknown:
+     - Reference `aidd/review/review-checklist-general.md`
+     - Verify general software concerns: correctness, security, reliability, testing, maintainability
    - Document which checklist items were verified
    - Note any checklist items that need attention
 
@@ -103,20 +107,30 @@ Perform code review with test evidence, risk assessment, and formal verdict. Thi
    - Documentation updates needed
    - Monitoring or observability additions
 
-8. **Create REVIEW.md**
+8. **Suggest commit message**
+   - Derive a commit message using the [Conventional Commits](https://www.conventionalcommits.org/) format: `type(scope): description`
+   - Select `type` from: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `perf`, `ci`, `style`
+   - Derive `scope` from the primary module, package, or area touched (omit if too generic)
+   - Derive `description` from the Summary of changes — one imperative sentence, ≤72 chars total
+   - Add a body line if there is a breaking change: `BREAKING CHANGE: <what broke>`
+   - If the change is ambiguous, suggest two alternatives and indicate which is preferred
+   - Example: `feat(auth): add JWT refresh token rotation`
+
+9. **Create REVIEW.md**
    - Use the template structure:
      - `# Code Review`
      - `## Summary of changes`
      - `## Risk assessment`
      - `## Sensitive points requiring human decision` - **MANDATORY**
      - `## Test evidence`
-     - `## Security checklist references` (Web3 / ML if applicable)
+     - `## Security checklist references` (Web3 / ML / General if applicable)
      - `## Verdict` (APPROVE | CHANGES_REQUESTED) - **MANDATORY**
      - `## Follow-ups`
-   - Fill each section with content from steps 1-7
+     - `## Suggested commit message` — one fenced code block containing the message from step 8
+   - Fill each section with content from steps 1-8
    - Save to `aidd/work/REVIEW.md`
 
-9. **Run review validation**
+10. **Run review validation**
    - Execute: `bash scripts/review-check.sh`
    - Verify Verdict field is present and valid
    - Address any warnings about test evidence

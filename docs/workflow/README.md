@@ -1,6 +1,6 @@
 # Workflow Documentation
 
-Modular workflow guide for the AIDD process. Use this index as your entry point.
+Modular workflow guide for the AIDD process.
 
 ## Contents
 
@@ -16,37 +16,39 @@ Modular workflow guide for the AIDD process. Use this index as your entry point.
 - [Debugging](debugging.md)
 - [Troubleshooting](troubleshooting.md)
 
-## Related Specifications
-
-- INTAKE template requirements: `docs/quality/intake.md`
-- PLAN template requirements: `docs/quality/technical-plan.md`
-
 ## Quick Reference
 
-**Workflow Entry Points:**
-- `prompts/start.md` - Start workflow (targeted or exploratory mode)
-- `prompts/audit.md` - Repository audit
-- `prompts/intake.md` - Create INTAKE.md
-- `prompts/plan.md` - Create PLAN.md
-- `bash scripts/validate-plan.sh` - Validate PLAN.md
-- `prompts/review.md` - Create REVIEW.md
-- `aidd/memory/activeContext.md` - Update activeContext.md
-- `prompts/pr-message.md` - Generate PR message
+### Prompts
 
-**Scripts:**
-- `bash scripts/validate-plan.sh` - Validate PLAN.md structure
-- `bash scripts/aidd-check.sh` - Comprehensive validation
-- `bash scripts/aidd-check.sh --plan` - Include PLAN.md validation
-- `bash scripts/aidd-check.sh --review` - Include REVIEW.md validation
-- `bash scripts/review-check.sh` - Validate REVIEW.md
-- `bash scripts/aidd-verify-ui.sh` - UI verification (if frontend)
-- `bash scripts/aidd-finish.sh` - Guided post-review closeout (optional)
-- `bash scripts/validate-rules.sh` - Validate rules structure
+- `prompts/start.md`
+- `prompts/audit.md`
+- `prompts/intake.md`
+- `prompts/plan.md`
+- `prompts/review.md`
+- `prompts/compact-response.md`
 
-**Artifacts:**
-- `aidd/work/AUDIT.md` - Repository analysis
-- `aidd/work/INTAKE.md` - Requirements and constraints
-- `aidd/work/PLAN.md` - Technical implementation plan
-- `aidd/work/REVIEW.md` - Review verdict and evidence
-- `aidd/work/github-signals.md` - GitHub signals (targeted mode)
-- `aidd/work/github-signals.config.yml` - GitHub signals configuration
+### Validation scripts
+
+- `bash scripts/validate-plan.sh`
+- `bash scripts/aidd-check.sh`
+- `bash scripts/review-check.sh`
+- `bash scripts/aidd-verify-ui.sh` (if UI changes)
+
+### Utility scripts
+
+- `bash scripts/gh-context.sh ...` (GitHub signals)
+- `bash scripts/c7-docs.sh --library <id> [--topic <topic>]` (Context7)
+- `bash scripts/aidd-rules-jit.sh` (just-in-time rules)
+- `bash scripts/aidd-diff-digest.sh` (compact diff digest)
+- `bash scripts/aidd-finish.sh` (cycle closeout + handoff)
+
+### Core artefacts
+
+- `aidd/work/AUDIT.md`
+- `aidd/work/INTAKE.md`
+- `aidd/work/PLAN.md`
+- `aidd/work/REVIEW.md`
+- `aidd/work/SUMMARY.md`
+- `aidd/work/HANDOFF.md`
+- `aidd/work/DIFF_DIGEST.md`
+- `aidd/work/RULES_JIT.md`

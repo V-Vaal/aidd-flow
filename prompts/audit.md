@@ -86,7 +86,7 @@ Perform a comprehensive repository audit to understand current state, architectu
       - Read the file for facts-only data
       - Reference config file in AUDIT.md (if `aidd/work/github-signals.config.yml` exists)
       - Restate filters used from config (if available)
-      - Include retrieval method (MCP or manual) from github-signals.md
+      - Include retrieval method (`gh-context.sh`) from github-signals.md
       - List results: counts, issues (id, title, state, labels, updated_at), PRs (same format)
     - If `github-signals.md` does NOT exist:
       - In "External Signals (GitHub)" section, write: "Not collected (Exploratory mode)"
@@ -112,6 +112,7 @@ Perform a comprehensive repository audit to understand current state, architectu
     - External Signals: facts only (IDs, titles, labels, state, updated_at)
     - AI sections: clearly marked, non-binding, no decisions or prioritization
     - Save to `aidd/work/AUDIT.md`
+    - Add a short digest line to `aidd/work/SUMMARY.md` (`phase=audit`, key risks, key candidates)
 
 ## Gate Reminders
 
@@ -123,7 +124,7 @@ Perform a comprehensive repository audit to understand current state, architectu
 
 - AUDIT.md exists at `aidd/work/AUDIT.md`
 - All required sections are present and filled
-- External Signals (GitHub) section included (MCP or manual)
+- External Signals (GitHub) section included (gh-context)
 - Content is based on actual repository inspection (no invented facts)
 - Findings are actionable and specific
 - AI sections clearly marked as non-binding

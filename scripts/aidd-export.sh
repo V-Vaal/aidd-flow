@@ -5,7 +5,7 @@
 #
 # Default behavior:
 # - Exports the current aidd-flow repo into <target>/.aidd-flow/
-# - Creates a minimal AGENTS.md at target root that redirects to .aidd-flow/AGENTS.md
+# - Creates AGENTS.md at target root from docs/templates/AGENTS.root.md
 #
 # Safety behavior:
 # - If <target>/.aidd-flow exists and is non-empty: refuse unless --force or --backup is provided
@@ -93,9 +93,15 @@ fi
 TARGET_ROOT="$(cd "$TARGET_PATH" && pwd)"
 TARGET_AIDD="$TARGET_ROOT/.aidd-flow"
 TARGET_AGENTS="$TARGET_ROOT/AGENTS.md"
+AGENTS_TEMPLATE="$REPO_ROOT/docs/templates/AGENTS.root.md"
 
 if [ ! -d "$REPO_ROOT/scripts" ]; then
     echo -e "${RED}Error: Source scripts directory not found: $REPO_ROOT/scripts${NC}"
+    exit 1
+fi
+
+if [ ! -f "$AGENTS_TEMPLATE" ]; then
+    echo -e "${RED}Error: AGENTS template not found: $AGENTS_TEMPLATE${NC}"
     exit 1
 fi
 
@@ -149,7 +155,12 @@ echo ""
 copy_success=false
 
 if command -v rsync &> /dev/null; then
-    if rsync -a --delete --exclude ".git" "$REPO_ROOT/" "$TARGET_AIDD/" 2>&1; then
+    if rsync -a --delete \
+        --exclude ".git" \
+        --exclude ".aidd-flow" \
+        --exclude "AGENTS.md" \
+        --exclude "AGENTS2.md" \
+        "$REPO_ROOT/" "$TARGET_AIDD/" 2>&1; then
         copy_success=true
     else
         echo -e "${YELLOW}Warning: rsync failed, trying fallback${NC}"
@@ -158,7 +169,12 @@ fi
 
 if [ "$copy_success" = false ]; then
     if command -v tar &> /dev/null; then
-        if (cd "$REPO_ROOT" && tar cf - --exclude ".git" . 2>/dev/null | (cd "$TARGET_AIDD" && tar xf - 2>/dev/null)); then
+        if (cd "$REPO_ROOT" && tar cf - \
+            --exclude ".git" \
+            --exclude ".aidd-flow" \
+            --exclude "AGENTS.md" \
+            --exclude "AGENTS2.md" \
+            . 2>/dev/null | (cd "$TARGET_AIDD" && tar xf - 2>/dev/null)); then
             copy_success=true
         else
             echo -e "${YELLOW}Warning: tar fallback failed, trying cp${NC}"
@@ -171,6 +187,8 @@ if [ "$copy_success" = false ]; then
     if [ -d "$TARGET_AIDD/.git" ]; then
         rm -rf "$TARGET_AIDD/.git"
     fi
+    rm -rf "$TARGET_AIDD/.aidd-flow"
+    rm -f "$TARGET_AIDD/AGENTS.md" "$TARGET_AIDD/AGENTS2.md"
 fi
 
 LOCK_FILE="$TARGET_AIDD/aidd/aidd.lock"
@@ -215,18 +233,7 @@ TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
     echo "template_version: $TEMPLATE_VERSION"
 } > "$LOCK_FILE"
 
-cat <<EOF > "$TARGET_AGENTS"
-# AGENTS.md — project
-
-This project uses aidd-flow installed under ".aidd-flow/".
-Load ".aidd-flow/AGENTS.md" as the canonical workflow entry point.
-
-Common commands:
-- bash .aidd-flow/scripts/validate-plan.sh
-- bash .aidd-flow/scripts/aidd-check.sh
-- bash .aidd-flow/scripts/review-check.sh
-- bash .aidd-flow/scripts/aidd-finish.sh
-EOF
+cp "$AGENTS_TEMPLATE" "$TARGET_AGENTS"
 
 echo -e "${GREEN}✓ Export complete${NC}"
 echo -e "${GREEN}✓ Created ${LOCK_FILE}${NC}"

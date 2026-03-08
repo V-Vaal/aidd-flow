@@ -2,101 +2,68 @@
 
 ## Scripts don't work
 
-**Verify scripts are executable:**
 ```bash
 chmod +x scripts/*.sh
 ```
 
 ## Rules not detected
 
-**Check structure:**
 ```bash
 bash scripts/validate-rules.sh
 ```
 
 ## Path errors
 
-**Ensure you run scripts from project root**, not from `scripts/`.
+Run scripts from project root.
 
-## MCP shows unavailable
+## gh CLI not authenticated
 
-**Possible causes:**
-- MCP server not configured in your IDE
-- MCP server not running
-- GitHub MCP server not installed
-
-**Solutions:**
-- Check your IDE's MCP settings
-- Verify MCP server is running
-- Install/configure GitHub MCP server if needed
-- Workflow will fall back to gh CLI or REST automatically
-
-## gh CLI shows not authenticated
-
-**Solution:**
 ```bash
 gh auth login
-# Follow prompts to authenticate
 ```
 
-## GitHub token shows missing
+## GitHub signals missing
 
-**Solutions:**
-1. Export token before launching your IDE:
-   ```bash
-   export GITHUB_TOKEN=your_token_here
-   # Relaunch your IDE from this shell
-   ```
+- Ensure `gh` is installed and authenticated.
+- Rerun:
+  - `bash scripts/gh-context.sh issues-open`
+  - `bash scripts/gh-context.sh prs-open`
+- Regenerate `aidd/work/github-signals.md`.
 
-2. Or use gh CLI instead:
-   ```bash
-   gh auth login
-   ```
+## Context7 command fails
 
-3. Or add to shell profile:
-   ```bash
-   # Add to ~/.bashrc or ~/.zshrc
-   export GITHUB_TOKEN=your_token_here
-   # Then restart shell and relaunch your IDE
-   ```
+Possible causes:
+- Invalid `--library` id
+- Network timeout
+- Malformed `--topic`
 
-## Fallback occurs silently
+Retry with explicit parameters:
 
-**Check:**
-- Review "Execution Environment" section in `github-signals.md`
-- Look for fallback messages in console output
-- Verify environment setup
+```bash
+bash scripts/c7-docs.sh --library reactjs/react.dev --topic hooks --tokens 2000
+```
 
-**Solution:** Fix environment issue and rerun. The gate will detect the correct method.
+## aidd-check fails on Context7 evidence
 
-## YAML concatenation in config
+`aidd-check.sh` requires at least one entry in `aidd/work/SUMMARY.md` under `## Context7 Evidence`.
 
-**Symptoms:** Config file shows concatenated values like `repo: owner/namerepo: newowner/newname`
+Fix:
+1. Run `bash scripts/c7-docs.sh --library <id> [--topic <topic>]`
+2. Verify evidence was appended to `aidd/work/SUMMARY.md`
+3. Rerun `bash scripts/aidd-check.sh`
 
-**Cause:** Inline concatenation instead of full line replacement
+## Context is too large
 
-**Solution:** Use full line replacement pattern `^repo:\s*.*$` and replace entire line
+- Set `CONTEXT_BUDGET=low`
+- Run `bash scripts/aidd-context.sh`
+- Prefer `aidd/work/SUMMARY.md` + `aidd/work/HANDOFF.md`
 
-## Target not overridden
+## Diff review is noisy
 
-**Symptoms:** Config still shows old target after providing new one
+Generate compact digest:
 
-**Cause:** Target Gate logic not executed or comparison failed
+```bash
+bash scripts/aidd-diff-digest.sh
+```
 
-**Solution:** Verify config parsing and comparison logic
-
-## Archive not created on target change
-
-**Symptoms:** Target changed but no archive folder created
-
-**Cause:** Reset Gate logic not executed or RUN_STATE.json not read correctly
-
-**Solution:** Verify RUN_STATE.json exists and is readable
-
-## Mixed content in artifacts
-
-**Symptoms:** Current artifacts contain both old and new target IDs
-
-**Cause:** Files not written as fresh (append instead of overwrite)
-
-**Solution:** Ensure all artifact writes use full file replacement
+Use `aidd/work/DIFF_DIGEST.md` instead of raw full diff when possible.

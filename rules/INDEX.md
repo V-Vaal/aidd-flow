@@ -64,6 +64,7 @@ These rules apply to every task regardless of context:
 | File | Description |
 |------|-------------|
 | `04-tools-and-configurations/4-package-installation.md` | Package installation rules |
+| `04-tools-and-configurations/4-gh-and-docs.md` | GitHub signals via gh and Context7 docs via curl |
 
 ## Workflows & Processes
 

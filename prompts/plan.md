@@ -65,6 +65,7 @@ Create a detailed technical plan with architecture, implementation steps, files 
    - Manual testing steps (list scenarios)
    - **Mandatory**: Include `bash scripts/aidd-check.sh`
    - **If UI changes**: Include `bash scripts/aidd-verify-ui.sh`
+   - **If external library APIs are touched**: Include `bash scripts/c7-docs.sh --library <id> [--topic <topic>]`
    - Performance tests if applicable
    - Security tests if applicable
 
@@ -103,6 +104,7 @@ Create a detailed technical plan with architecture, implementation steps, files 
       - `## Notes`
     - Fill each section with content from steps 1-10
     - Save to `aidd/work/PLAN.md`
+    - Add a concise plan digest line to `aidd/work/SUMMARY.md` (`phase=plan`, goal, main risks)
 
 12. **Plan checklist** (for validation)
     - Verify PLAN.md contains all required sections:
@@ -166,3 +168,4 @@ Create a detailed technical plan with architecture, implementation steps, files 
 - Tests/Checks include mandatory aidd-check.sh (and aidd-verify-ui.sh if UI changes)
 - Rollback plan is documented
 - PLAN.md validation passes: `bash scripts/validate-plan.sh` returns exit code 0
+- `CONTEXT_BUDGET` strategy is explicit (`low` by default, escalate only if needed)
